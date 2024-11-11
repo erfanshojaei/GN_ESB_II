@@ -6,7 +6,8 @@ from camera_package.centroid import process_cnt
 from camera import grab_frame_from_camera
 
 # Pair of cameras used for detecting one tree
-camera_pair = ('169.254.207.1', '169.254.207.2')
+camera_pair = ['169.254.207.1', '169.254.207.2']
+# For future, additional cameras can be added to the list, e.g., ['169.254.207.1', '169.254.207.2', '169.254.207.3', ...]
 
 # Define crop coordinates for each camera (example coordinates)
 crop_coordinates = {
@@ -20,10 +21,12 @@ roi_coordinates = {
     '169.254.207.2': (200, 0, 100, 1000),  # x, y, width, height for ROI Camera 2
 }
 
-# Flag to check if the tree is planted vertically (True only if centroids are in ROI for both cameras)
-tree_is_vertical = True
+# Flags to track if each camera detects the tree as vertical
+camera_01 = False
+camera_02 = False
 
-for ip in camera_pair:
+# Iterate through each camera and process the image
+for idx, ip in enumerate(camera_pair, start=1):
     try:
         # Grab frame from the camera
         frame = grab_frame_from_camera(ip)
@@ -35,22 +38,22 @@ for ip in camera_pair:
         if frame is not None and frame.size > 0:
             print(f"Original frame size from camera {ip}: {frame.shape[0]} x {frame.shape[1]}")
 
-            # Create and display the original frame window
-            cv2.namedWindow(f"Original Camera {ip}", cv2.WINDOW_NORMAL)  # Ensure window is movable and resizable
+            # Show the original frame
+            cv2.namedWindow(f"Original Camera {ip}", cv2.WINDOW_NORMAL)
             cv2.imshow(f"Original Camera {ip}", frame)
             cv2.resizeWindow(f"Original Camera {ip}", 800, 600)
-            cv2.moveWindow(f"Original Camera {ip}", 100, 100)  # Move to specific position
-            cv2.waitKey(1)  # Allow some time for rendering
+            cv2.moveWindow(f"Original Camera {ip}", 100, 100)
+            cv2.waitKey(1)
 
             # Crop the frame
             coordinates = crop_coordinates[ip]
             cropped_frame = crop_frame(frame, coordinates)
 
-            # Create and display the cropped frame window
+            # Show the cropped frame
             cv2.namedWindow(f"Cropped Frame Camera {ip}", cv2.WINDOW_NORMAL)
             cv2.imshow(f"Cropped Frame Camera {ip}", cropped_frame)
             cv2.resizeWindow(f"Cropped Frame Camera {ip}", 800, 600)
-            cv2.moveWindow(f"Cropped Frame Camera {ip}", 400, 100)  # Move to specific position
+            cv2.moveWindow(f"Cropped Frame Camera {ip}", 400, 100)
             cv2.waitKey(1)
 
             # Convert cropped frame to binary and apply morphological opening
@@ -59,39 +62,57 @@ for ip in camera_pair:
             # Calculate the centroid
             centroid = process_cnt(opened_binary_image)
 
-            # Convert opened binary image to BGR for coloring
+            # Convert binary image to BGR for ROI and centroid visualization
             opened_binary_image_colored = cv2.cvtColor(opened_binary_image, cv2.COLOR_GRAY2BGR)
 
             # Get the ROI coordinates
             roi_coords = roi_coordinates[ip]
             x, y, w, h = roi_coords
 
-            # Draw the ROI rectangle on the opened binary image
-            cv2.rectangle(opened_binary_image_colored, (x, y), (x + w, y + h), (0, 255, 0), 2)  # Green color for ROI
+            # Draw the ROI rectangle
+            cv2.rectangle(opened_binary_image_colored, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
-            # Draw the centroid on the opened binary image in red
+            # Draw the centroid on the opened binary image
             if centroid != (0, 0):
-                cv2.circle(opened_binary_image_colored, centroid, 7, (0, 0, 255), -1)  # Red color for centroid
+                cv2.circle(opened_binary_image_colored, centroid, 7, (0, 0, 255), -1)
 
-            # Create and display the binary image with ROI and centroid
+            # Display binary image with ROI and centroid
             cv2.namedWindow(f"Opened Binary Image with ROI Camera {ip}", cv2.WINDOW_NORMAL)
             cv2.imshow(f"Opened Binary Image with ROI Camera {ip}", opened_binary_image_colored)
             cv2.resizeWindow(f"Opened Binary Image with ROI Camera {ip}", 800, 600)
-            cv2.moveWindow(f"Opened Binary Image with ROI Camera {ip}", 700, 100)  # Move to specific position
+            cv2.moveWindow(f"Opened Binary Image with ROI Camera {ip}", 700, 100)
             cv2.waitKey(1)
 
             # Check if the centroid is within the ROI for the current camera
-            if not (x <= centroid[0] <= x + w and y <= centroid[1] <= y + h):
-                tree_is_vertical = False
+            if x <= centroid[0] <= x + w and y <= centroid[1] <= y + h:
+                print(f"Camera {ip} detects the tree as vertical.")
+                if ip == '169.254.207.1':
+                    camera_01 = True
+                elif ip == '169.254.207.2':
+                    camera_02 = True
+            else:
+                print(f"Camera {ip} does not detect the tree as vertical.")
+                if ip == '169.254.207.1':
+                    camera_01 = False
+                elif ip == '169.254.207.2':
+                    camera_02 = False
 
         else:
             print(f"Invalid frame from camera {ip}: {frame}")
+            if ip == '169.254.207.1':
+                camera_01 = False
+            elif ip == '169.254.207.2':
+                camera_02 = False
 
     except Exception as e:
         print(f"Error with camera {ip}: {e}")
+        if ip == '169.254.207.1':
+            camera_01 = False
+        elif ip == '169.254.207.2':
+            camera_02 = False
 
-# After processing both cameras, check if the tree is vertical
-if tree_is_vertical:
+# Final check to see if the tree is vertical
+if camera_01 and camera_02:
     print("The tree is planted vertically.")
 else:
     print("The tree is not planted vertically.")
