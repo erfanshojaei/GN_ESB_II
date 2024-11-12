@@ -7,4 +7,5 @@ GN_Project/
         │   ├── crop_frame.py               # Contains crop_frame function
         │   └── centroid.py                  # Contains process_cnt function
         ├── camera.py                        # Contains grab_frame_from_camera function
+        ├── process_frames.py                # Contains process_frames function
         └── main.py                          # Main program to execute
