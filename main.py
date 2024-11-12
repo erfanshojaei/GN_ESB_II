@@ -13,6 +13,13 @@ def process_frames():
     local_output_path = 'camera_outputs'  # Local folder for saving frames
     run_count_file = os.path.join(usb_path, 'run_count.txt')
 
+    # Check if the USB device is connected
+    if not os.path.exists(usb_path):
+        print("WARNING: USB is not connected. The program will continue using local storage.")
+        usb_connected = False
+    else:
+        usb_connected = True
+
     # Create the local output directory if it does not exist
     if not os.path.exists(local_output_path):
         os.makedirs(local_output_path)
@@ -24,18 +31,19 @@ def process_frames():
                 os.remove(file_path)
 
     # Read the current run count from a file (or initialize if it doesn't exist)
-    if os.path.exists(run_count_file):
+    if usb_connected and os.path.exists(run_count_file):
         with open(run_count_file, 'r') as file:
             run_count = int(file.read())  # Read the current run count
     else:
-        run_count = 0  # Initialize run count to 0 if the file does not exist
+        run_count = 0  # Initialize run count to 0 if the file does not exist or USB is not connected
 
     # Increment the run count
     run_count += 1
 
-    # Save the updated run count back to the file
-    with open(run_count_file, 'w') as file:
-        file.write(str(run_count))
+    # Save the updated run count back to the file if USB is connected
+    if usb_connected:
+        with open(run_count_file, 'w') as file:
+            file.write(str(run_count))
 
     # Pair of cameras used for detecting one tree
     camera_pair = ('169.254.207.1', '169.254.207.2')
@@ -81,7 +89,8 @@ def process_frames():
                 binary_file_path_local = os.path.join(local_output_path, f"binary_{ip}_{run_count}.png")
 
                 # Save original frame
-                cv2.imwrite(original_file_path_usb, frame)
+                if usb_connected:
+                    cv2.imwrite(original_file_path_usb, frame)
                 cv2.imwrite(original_file_path_local, frame)
 
                 # Create and display the original frame window
@@ -96,7 +105,8 @@ def process_frames():
                 cropped_frame = crop_frame(frame, coordinates)
 
                 # Save cropped frame
-                cv2.imwrite(cropped_file_path_usb, cropped_frame)
+                if usb_connected:
+                    cv2.imwrite(cropped_file_path_usb, cropped_frame)
                 cv2.imwrite(cropped_file_path_local, cropped_frame)
 
                 # Create and display the cropped frame window
@@ -127,7 +137,8 @@ def process_frames():
                     cv2.circle(opened_binary_image_colored, centroid, 7, (0, 0, 255), -1)  # Red color for centroid
 
                 # Save the binary image with ROI and centroid (saved with coloring)
-                cv2.imwrite(binary_file_path_usb, opened_binary_image_colored)  # Save to USB
+                if usb_connected:
+                    cv2.imwrite(binary_file_path_usb, opened_binary_image_colored)  # Save to USB
                 cv2.imwrite(binary_file_path_local, opened_binary_image_colored)  # Save to local folder
 
                 # Create and display the binary image with ROI and centroid
