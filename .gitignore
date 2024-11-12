@@ -1,0 +1,6 @@
+# Ignore camera outputs folder
+camera_outputs/
+
+# You can add other files/folders to ignore as needed
+*.pyc
+__pycache__/
