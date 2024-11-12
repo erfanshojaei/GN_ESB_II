@@ -109,15 +109,11 @@ def process_frames():
                 # Convert cropped frame to binary and apply morphological opening
                 opened_binary_image = process_image(cropped_frame)
 
-                # Save binary frame
-                cv2.imwrite(binary_file_path_usb, opened_binary_image)
-                cv2.imwrite(binary_file_path_local, opened_binary_image)
+                # Convert opened binary image to BGR for coloring
+                opened_binary_image_colored = cv2.cvtColor(opened_binary_image, cv2.COLOR_GRAY2BGR)
 
                 # Calculate the centroid
                 centroid = process_cnt(opened_binary_image)
-
-                # Convert opened binary image to BGR for coloring
-                opened_binary_image_colored = cv2.cvtColor(opened_binary_image, cv2.COLOR_GRAY2BGR)
 
                 # Get the ROI coordinates
                 roi_coords = roi_coordinates[ip]
@@ -129,6 +125,10 @@ def process_frames():
                 # Draw the centroid on the opened binary image in red
                 if centroid != (0, 0):
                     cv2.circle(opened_binary_image_colored, centroid, 7, (0, 0, 255), -1)  # Red color for centroid
+
+                # Save the binary image with ROI and centroid (saved with coloring)
+                cv2.imwrite(binary_file_path_usb, opened_binary_image_colored)  # Save to USB
+                cv2.imwrite(binary_file_path_local, opened_binary_image_colored)  # Save to local folder
 
                 # Create and display the binary image with ROI and centroid
                 cv2.namedWindow(f"Opened Binary Image with ROI Camera {ip}", cv2.WINDOW_NORMAL)
@@ -151,9 +151,12 @@ def process_frames():
     for ip in camera_pair:
         if not tree_is_vertical[ip]:
             print(f"The tree from camera {ip} is not planted vertically.")
-            break
-    else:
+
+    # If neither camera detects the tree as not vertical, print the overall status
+    if all(tree_is_vertical[ip] for ip in camera_pair):
         print("The tree is planted vertically.")
+    else:
+        print("The tree is NOT planted vertically.")
 
     # Wait indefinitely until a key is pressed
     cv2.waitKey(0)
