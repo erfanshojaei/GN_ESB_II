@@ -2,10 +2,11 @@ GN_Project/
 └── Python/
     └── Centroid/
         ├── camera_package/
-        │   ├── __init__.py                # Package initialization file
-        │   ├── binary_image_processing.py  # Contains process_image function
-        │   ├── crop_frame.py               # Contains crop_frame function
-        │   └── centroid.py                  # Contains process_cnt function
-        ├── camera.py                        # Contains grab_frame_from_camera function
-        ├── process_frames.py                # Contains process_frames function
-        └── main.py                          # Main program to execute
+        │   ├── __init__.py
+        │   ├── binary_image_processing.py
+        │   ├── crop_frame.py
+        │   └── centroid.py
+        ├── camera.py
+        ├── check_cameras.py              # New file for checking cameras
+        ├── process_frames.py
+        └── main.py

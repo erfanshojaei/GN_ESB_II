@@ -7,7 +7,7 @@ from camera_package.crop_frame import crop_frame
 from camera_package.centroid import process_cnt
 from camera import grab_frame_from_camera
 
-def process_frames():
+def process_frames(camera_ips):
     # Define paths
     usb_path = 'E:\\'  # Adjust path for your USB device
     local_output_path = 'camera_outputs'  # Local folder for saving frames
@@ -45,9 +45,6 @@ def process_frames():
         with open(run_count_file, 'w') as file:
             file.write(str(run_count))
 
-    # Pair of cameras used for detecting one tree
-    camera_pair = ('169.254.207.1', '169.254.207.2')
-
     # Define crop coordinates for each camera (example coordinates)
     crop_coordinates = {
         '169.254.207.1': (700, 500, 750, 1000),  # x, y, width, height for Camera 1
@@ -61,10 +58,10 @@ def process_frames():
     }
 
     # Initialize tree vertical status
-    tree_is_vertical = {ip: True for ip in camera_pair}
+    tree_is_vertical = {ip: True for ip in camera_ips}
 
     # Process each camera in the pair
-    for ip in camera_pair:
+    for ip in camera_ips:
         try:
             # Grab frame from the camera
             frame = grab_frame_from_camera(ip)
@@ -85,33 +82,35 @@ def process_frames():
                 new_height = int((new_width / width) * height)
                 resized_frame = cv2.resize(color_frame, (new_width, new_height))
 
-                # Save the frames with the camera IP, run count, and window name to USB and local folders
-                timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+                # Create file paths for saving frames on USB and local folder with run_count and current_date
+                original_file_path_local = os.path.join(local_output_path, f"original_{ip}.png")
+                cropped_file_path_local = os.path.join(local_output_path, f"cropped_{ip}.png")
+                binary_file_path_local = os.path.join(local_output_path, f"binary_{ip}.png")
+                final_binary_file_path_local = os.path.join(local_output_path, f"final_binary_{ip}.png")
 
-                # Create file paths for saving frames on USB and local folder with run_count
-                original_file_path_usb = os.path.join(usb_path, f"original_{ip}_{run_count}_{timestamp}.png")
-                cropped_file_path_usb = os.path.join(usb_path, f"cropped_{ip}_{run_count}_{timestamp}.png")
-                binary_file_path_usb = os.path.join(usb_path, f"binary_{ip}_{run_count}_{timestamp}.png")
-                final_binary_file_path_usb = os.path.join(usb_path, f"final_binary_{ip}_{run_count}_{timestamp}.png")
+                # Use run_count and current_date in filenames for saving images to USB to prevent overwriting
+                current_date = datetime.now().strftime('%Y-%m-%d')
+                original_file_path_usb = os.path.join(usb_path, f"original_{current_date}_{ip}_{run_count}.png")
+                cropped_file_path_usb = os.path.join(usb_path, f"cropped_{current_date}_{ip}_{run_count}.png")
+                binary_file_path_usb = os.path.join(usb_path, f"binary_{current_date}_{ip}_{run_count}.png")
+                final_binary_file_path_usb = os.path.join(usb_path, f"final_binary_{current_date}_{ip}_{run_count}.png")
 
-                original_file_path_local = os.path.join(local_output_path, f"original_{ip}_{run_count}.png")
-                cropped_file_path_local = os.path.join(local_output_path, f"cropped_{ip}_{run_count}.png")
-                binary_file_path_local = os.path.join(local_output_path, f"binary_{ip}_{run_count}.png")
-                final_binary_file_path_local = os.path.join(local_output_path, f"final_binary_{ip}_{run_count}.png")
-
-                # Save original frame
+                # Save original frame both locally and on USB with run_count and current_date
+                cv2.imwrite(original_file_path_local, frame)
                 if usb_connected:
                     cv2.imwrite(original_file_path_usb, frame)
-                cv2.imwrite(original_file_path_local, frame)
+
+                # Save resized original frame for display
+                cv2.imshow(f"Resized Original Frame {ip}", resized_frame)
 
                 # Crop the frame
                 coordinates = crop_coordinates[ip]
                 cropped_frame = crop_frame(frame, coordinates)
 
-                # Save cropped frame
+                # Save cropped frame both locally and on USB with run_count and current_date
+                cv2.imwrite(cropped_file_path_local, cropped_frame)
                 if usb_connected:
                     cv2.imwrite(cropped_file_path_usb, cropped_frame)
-                cv2.imwrite(cropped_file_path_local, cropped_frame)
 
                 # Convert cropped frame to binary and apply morphological opening
                 opened_binary_image = process_image(cropped_frame)
@@ -138,35 +137,23 @@ def process_frames():
                 if not (x <= centroid[0] <= x + w and y <= centroid[1] <= y + h):
                     tree_is_vertical[ip] = False
 
-                # Save the final binary image with ROI and centroid to both USB and local folders
+                # Save the final binary image with ROI and centroid to the local folder and USB with run_count and current_date
+                cv2.imwrite(final_binary_file_path_local, opened_binary_image_colored)
                 if usb_connected:
                     cv2.imwrite(final_binary_file_path_usb, opened_binary_image_colored)
-                cv2.imwrite(final_binary_file_path_local, opened_binary_image_colored)
 
-                # Display the processed frames
-                cv2.imshow(f"Original Frame from {ip}", resized_frame)
-                cv2.imshow(f"Cropped Frame from {ip}", cropped_frame)
-                cv2.imshow(f"Binary Frame from {ip}", opened_binary_image_colored)
-
-            else:
-                print(f"Invalid frame from camera {ip}: {frame}")
+                # Display the processed frame
+                cv2.imshow(f"Cropped Frame {ip}", cropped_frame)
+                cv2.imshow(f"Binary Frame with Centroid & ROI {ip}", opened_binary_image_colored)
 
         except Exception as e:
-            print(f"Error with camera {ip}: {e}")
+            print(f"Error processing frame for camera {ip}: {e}")
 
-    # After processing both cameras, check if the tree is vertical
-    for ip in camera_pair:
-        if not tree_is_vertical[ip]:
-            print(f"The tree from camera {ip} is not planted vertically.")
-
-    # If neither camera detects the tree as not vertical, print the overall status
-    if all(tree_is_vertical[ip] for ip in camera_pair):
+    # Print the vertical status of the tree after checking both cameras
+    if all(tree_is_vertical.values()):
         print("The tree is planted vertically.")
     else:
-        print("The tree is NOT planted vertically.")
+        print("The tree is not planted vertically.")
 
-    # Wait indefinitely until a key is pressed
-    cv2.waitKey(0)
-
-    # Close all OpenCV windows
+    cv2.waitKey(0)  # Wait for a key press to close the OpenCV windows
     cv2.destroyAllWindows()
