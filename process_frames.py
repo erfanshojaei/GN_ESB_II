@@ -1,5 +1,6 @@
 import cv2
 import os
+import numpy as np
 from datetime import datetime
 from camera_package.binary_image_processing import process_image
 from camera_package.crop_frame import crop_frame
@@ -12,6 +13,13 @@ def process_frames():
     local_output_path = 'camera_outputs'  # Local folder for saving frames
     run_count_file = os.path.join(usb_path, 'run_count.txt')
 
+    # Check if the USB device is connected
+    if not os.path.exists(usb_path):
+        print("WARNING: USB is not connected. The program will continue using local storage.")
+        usb_connected = False
+    else:
+        usb_connected = True
+
     # Create the local output directory if it does not exist
     if not os.path.exists(local_output_path):
         os.makedirs(local_output_path)
@@ -23,25 +31,26 @@ def process_frames():
                 os.remove(file_path)
 
     # Read the current run count from a file (or initialize if it doesn't exist)
-    if os.path.exists(run_count_file):
+    if usb_connected and os.path.exists(run_count_file):
         with open(run_count_file, 'r') as file:
             run_count = int(file.read())  # Read the current run count
     else:
-        run_count = 0  # Initialize run count to 0 if the file does not exist
+        run_count = 0  # Initialize run count to 0 if the file does not exist or USB is not connected
 
     # Increment the run count
     run_count += 1
 
-    # Save the updated run count back to the file
-    with open(run_count_file, 'w') as file:
-        file.write(str(run_count))
+    # Save the updated run count back to the file if USB is connected
+    if usb_connected:
+        with open(run_count_file, 'w') as file:
+            file.write(str(run_count))
 
     # Pair of cameras used for detecting one tree
     camera_pair = ('169.254.207.1', '169.254.207.2')
 
     # Define crop coordinates for each camera (example coordinates)
     crop_coordinates = {
-        '169.254.207.1': (700, 500, 750, 1000),  # x, y, width, height for Camera 1
+        '169.254.207.1': (900, 500, 750, 1000),  # x, y, width, height for Camera 1
         '169.254.207.2': (700, 500, 750, 1000),  # x, y, width, height for Camera 2
     }
 
@@ -67,6 +76,15 @@ def process_frames():
             if frame is not None and frame.size > 0:
                 print(f"Original frame size from camera {ip}: {frame.shape[0]} x {frame.shape[1]}")
 
+                # Convert the grayscale frame to color (BGR) for drawing purposes
+                color_frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+
+                # Resize the original frame for display (resize width to 640px, maintain aspect ratio)
+                height, width = color_frame.shape[:2]
+                new_width = 640
+                new_height = int((new_width / width) * height)
+                resized_frame = cv2.resize(color_frame, (new_width, new_height))
+
                 # Save the frames with the camera IP, run count, and window name to USB and local folders
                 timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 
@@ -80,35 +98,23 @@ def process_frames():
                 binary_file_path_local = os.path.join(local_output_path, f"binary_{ip}_{run_count}.png")
 
                 # Save original frame
-                cv2.imwrite(original_file_path_usb, frame)
+                if usb_connected:
+                    cv2.imwrite(original_file_path_usb, frame)
                 cv2.imwrite(original_file_path_local, frame)
-
-                # Create and display the original frame window
-                cv2.namedWindow(f"Original Camera {ip}", cv2.WINDOW_NORMAL)
-                cv2.imshow(f"Original Camera {ip}", frame)
-                cv2.resizeWindow(f"Original Camera {ip}", 800, 600)
-                cv2.moveWindow(f"Original Camera {ip}", 100, 100)  # Move to specific position
-                cv2.waitKey(1)  # Allow some time for rendering
 
                 # Crop the frame
                 coordinates = crop_coordinates[ip]
                 cropped_frame = crop_frame(frame, coordinates)
 
                 # Save cropped frame
-                cv2.imwrite(cropped_file_path_usb, cropped_frame)
+                if usb_connected:
+                    cv2.imwrite(cropped_file_path_usb, cropped_frame)
                 cv2.imwrite(cropped_file_path_local, cropped_frame)
-
-                # Create and display the cropped frame window
-                cv2.namedWindow(f"Cropped Frame Camera {ip}", cv2.WINDOW_NORMAL)
-                cv2.imshow(f"Cropped Frame Camera {ip}", cropped_frame)
-                cv2.resizeWindow(f"Cropped Frame Camera {ip}", 800, 600)
-                cv2.moveWindow(f"Cropped Frame Camera {ip}", 400, 100)  # Move to specific position
-                cv2.waitKey(1)
 
                 # Convert cropped frame to binary and apply morphological opening
                 opened_binary_image = process_image(cropped_frame)
 
-                # Convert opened binary image to BGR for coloring
+                # Convert opened binary image to BGR for drawing
                 opened_binary_image_colored = cv2.cvtColor(opened_binary_image, cv2.COLOR_GRAY2BGR)
 
                 # Calculate the centroid
@@ -118,27 +124,26 @@ def process_frames():
                 roi_coords = roi_coordinates[ip]
                 x, y, w, h = roi_coords
 
-                # Draw the ROI rectangle on the opened binary image
-                cv2.rectangle(opened_binary_image_colored, (x, y), (x + w, y + h), (0, 255, 0), 2)  # Green color for ROI
+                # Draw the ROI as a rectangle on the binary image
+                cv2.rectangle(opened_binary_image_colored, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
-                # Draw the centroid on the opened binary image in red
-                if centroid != (0, 0):
-                    cv2.circle(opened_binary_image_colored, centroid, 7, (0, 0, 255), -1)  # Red color for centroid
-
-                # Save the binary image with ROI and centroid (saved with coloring)
-                cv2.imwrite(binary_file_path_usb, opened_binary_image_colored)  # Save to USB
-                cv2.imwrite(binary_file_path_local, opened_binary_image_colored)  # Save to local folder
-
-                # Create and display the binary image with ROI and centroid
-                cv2.namedWindow(f"Opened Binary Image with ROI Camera {ip}", cv2.WINDOW_NORMAL)
-                cv2.imshow(f"Opened Binary Image with ROI Camera {ip}", opened_binary_image_colored)
-                cv2.resizeWindow(f"Opened Binary Image with ROI Camera {ip}", 800, 600)
-                cv2.moveWindow(f"Opened Binary Image with ROI Camera {ip}", 700, 100)  # Move to specific position
-                cv2.waitKey(1)
+                # Draw the centroid as a circle on the binary image
+                if centroid is not None:
+                    cx, cy = centroid
+                    cv2.circle(opened_binary_image_colored, (cx, cy), 5, (0, 0, 255), -1)
 
                 # Check if the centroid is within the ROI for the current camera
                 if not (x <= centroid[0] <= x + w and y <= centroid[1] <= y + h):
                     tree_is_vertical[ip] = False
+
+                # Save the final binary image with ROI and centroid to local folder
+                final_binary_image_path_local = os.path.join(local_output_path, f"final_binary_{ip}_{run_count}.png")
+                cv2.imwrite(final_binary_image_path_local, opened_binary_image_colored)
+
+                # Display the processed frames
+                cv2.imshow(f"Original Frame from {ip}", resized_frame)
+                cv2.imshow(f"Cropped Frame from {ip}", cropped_frame)
+                cv2.imshow(f"Binary Frame from {ip}", opened_binary_image_colored)
 
             else:
                 print(f"Invalid frame from camera {ip}: {frame}")
