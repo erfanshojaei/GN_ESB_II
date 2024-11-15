@@ -11,7 +11,7 @@ def process_frames():
     # Define paths
     usb_path = 'E:\\'  # Adjust path for your USB device
     local_output_path = 'camera_outputs'  # Local folder for saving frames
-    run_count_file = os.path.join(usb_path, 'run_count.txt')
+    run_count_file = os.path.join(usb_path, 'run_count.txt')  # Save run_count in the USB directory
 
     # Check if the USB device is connected
     if not os.path.exists(usb_path):
@@ -50,7 +50,7 @@ def process_frames():
 
     # Define crop coordinates for each camera (example coordinates)
     crop_coordinates = {
-        '169.254.207.1': (900, 500, 750, 1000),  # x, y, width, height for Camera 1
+        '169.254.207.1': (700, 500, 750, 1000),  # x, y, width, height for Camera 1
         '169.254.207.2': (700, 500, 750, 1000),  # x, y, width, height for Camera 2
     }
 
@@ -92,10 +92,12 @@ def process_frames():
                 original_file_path_usb = os.path.join(usb_path, f"original_{ip}_{run_count}_{timestamp}.png")
                 cropped_file_path_usb = os.path.join(usb_path, f"cropped_{ip}_{run_count}_{timestamp}.png")
                 binary_file_path_usb = os.path.join(usb_path, f"binary_{ip}_{run_count}_{timestamp}.png")
+                final_binary_file_path_usb = os.path.join(usb_path, f"final_binary_{ip}_{run_count}_{timestamp}.png")
 
                 original_file_path_local = os.path.join(local_output_path, f"original_{ip}_{run_count}.png")
                 cropped_file_path_local = os.path.join(local_output_path, f"cropped_{ip}_{run_count}.png")
                 binary_file_path_local = os.path.join(local_output_path, f"binary_{ip}_{run_count}.png")
+                final_binary_file_path_local = os.path.join(local_output_path, f"final_binary_{ip}_{run_count}.png")
 
                 # Save original frame
                 if usb_connected:
@@ -136,9 +138,10 @@ def process_frames():
                 if not (x <= centroid[0] <= x + w and y <= centroid[1] <= y + h):
                     tree_is_vertical[ip] = False
 
-                # Save the final binary image with ROI and centroid to local folder
-                final_binary_image_path_local = os.path.join(local_output_path, f"final_binary_{ip}_{run_count}.png")
-                cv2.imwrite(final_binary_image_path_local, opened_binary_image_colored)
+                # Save the final binary image with ROI and centroid to both USB and local folders
+                if usb_connected:
+                    cv2.imwrite(final_binary_file_path_usb, opened_binary_image_colored)
+                cv2.imwrite(final_binary_file_path_local, opened_binary_image_colored)
 
                 # Display the processed frames
                 cv2.imshow(f"Original Frame from {ip}", resized_frame)
