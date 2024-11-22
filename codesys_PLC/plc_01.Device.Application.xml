@@ -11,6 +11,7 @@
   <NodeList>
     <Node name="Application">
       <Node name="PLC_PRG">
+        <Node name="exitScript" type="T_BOOL" access="ReadWrite" />
         <Node name="run_program" type="T_BOOL" access="ReadWrite" />
       </Node>
     </Node>

@@ -155,5 +155,5 @@ def process_frames(camera_ips):
     else:
         print("The tree is not planted vertically.")
 
-    cv2.waitKey(0)  # Wait for a key press to close the OpenCV windows
-    cv2.destroyAllWindows()
+   # cv2.waitKey(0)  # Wait for a key press to close the OpenCV windows
+   # cv2.destroyAllWindows()
