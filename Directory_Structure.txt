@@ -8,5 +8,7 @@ GN_Project/
     │   │   └── centroid.py                 # Contains process_cnt function
     │   ├── camera.py                       # Contains grab_frame_from_camera function
     │   ├── process_frames.py               # Contains process_frames function
-    │   ├── main.py                         # Main program to execute
-    │   └── opcua_connection.py             # File for OPC UA connection handling
+    │   ├── opcua_connection.py             # File for OPC UA connection handling
+    │   ├── exit_operation.py               # Contains exit_operation function
+    │   ├── planting_operation.py           # Contains planting_operation function
+    │   └── main.py                         # Main program to execute
