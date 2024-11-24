@@ -103,6 +103,9 @@ def process_frames(camera_ips):
                 # Save resized original frame for display
                 cv2.imshow(f"Resized Original Frame {ip}", resized_frame)
 
+                # Add a small delay (e.g., 30 milliseconds) to allow OpenCV to refresh the frame
+                cv2.waitKey(500)
+
                 # Crop the frame
                 coordinates = crop_coordinates[ip]
                 cropped_frame = crop_frame(frame, coordinates)
@@ -144,7 +147,14 @@ def process_frames(camera_ips):
 
                 # Display the processed frame
                 cv2.imshow(f"Cropped Frame {ip}", cropped_frame)
+
+                # Add a small delay (e.g., 30 milliseconds) to allow OpenCV to refresh the frame
+                cv2.waitKey(500)
+
                 cv2.imshow(f"Binary Frame with Centroid & ROI {ip}", opened_binary_image_colored)
+
+                # Add a small delay (e.g., 30 milliseconds) to allow OpenCV to refresh the frame
+                cv2.waitKey(500)
 
         except Exception as e:
             print(f"Error processing frame for camera {ip}: {e}")

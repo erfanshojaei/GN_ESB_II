@@ -7,12 +7,14 @@
   </Header>
   <TypeList>
     <TypeSimple name="T_BOOL" size="1" swapsize="0" typeclass="Bool" iecname="BOOL" />
+    <TypeSimple name="T_DINT" size="4" swapsize="4" typeclass="DInt" iecname="DINT" />
   </TypeList>
   <NodeList>
     <Node name="Application">
       <Node name="PLC_PRG">
         <Node name="exit_script" type="T_BOOL" access="ReadWrite" />
         <Node name="run_program" type="T_BOOL" access="ReadWrite" />
+        <Node name="sessionNumber" type="T_DINT" access="ReadWrite" />
       </Node>
     </Node>
   </NodeList>
