@@ -1,0 +1,11 @@
+camera_ips:
+  - 169.254.207.1
+  - 169.254.207.2
+plc_variables:
+  run_program: run_program
+  exit_script: exit_script
+  session_number: sessionNumber
+  tree_vertical: tree_vertical
+  tree_non_vertical: tree_non_vertical
+max_session_number: 5
+

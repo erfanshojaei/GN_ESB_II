@@ -1,6 +1,8 @@
 # session_utils.py
 
 import logging
+import time
+
 
 # Define the path for the PLC variables
 plcVarPath = ["0:Objects",

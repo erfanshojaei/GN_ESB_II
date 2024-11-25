@@ -1,14 +1,16 @@
 GN_Project/
 └── Python/
-    ├── Cnt_mtd/                           # Directory for camera, centroid, and OPC UA connection files
-    │   ├── camera_package/                 # Contains image processing scripts
-    │   │   ├── __init__.py                 # Package initialization file
-    │   │   ├── binary_image_processing.py   # Contains process_image function
-    │   │   ├── crop_frame.py               # Contains crop_frame function
-    │   │   └── centroid.py                 # Contains process_cnt function
-    │   ├── camera.py                       # Contains grab_frame_from_camera function
-    │   ├── process_frames.py               # Contains process_frames function
-    │   ├── opcua_connection.py             # File for OPC UA connection handling
-    │   ├── exit_operation.py               # Contains exit_operation function
-    │   ├── planting_operation.py           # Contains planting_operation function
-    │   └── main.py                         # Main program to execute
+    ├── Cnt_mtd/                           
+    │   ├── camera_package/                 
+    │   │   ├── __init__.py                 
+    │   │   ├── binary_image_processing.py  
+    │   │   ├── crop_frame.py               
+    │   │   └── centroid.py                 
+    │   ├── camera.py                       
+    │   ├── process_frames.py               
+    │   ├── opcua_connection.py             
+    │   ├── exit_operation.py               
+    │   ├── planting_operation.py           
+    │   ├── main.py                         
+    │   ├── set_vertical.py                # New file for the set_vertical function
+    │   └── config.yaml                     # Configuration file
