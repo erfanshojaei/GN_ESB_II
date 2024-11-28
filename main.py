@@ -50,14 +50,14 @@ def process_frames():
 
     # Define crop coordinates for each camera (example coordinates)
     crop_coordinates = {
-        '169.254.207.1': (700, 300, 1500, 1500),  # x, y, width, height for Camera 1
+        '169.254.207.1': (400, 300, 1500, 1500),  # x, y, width, height for Camera 1
         '169.254.207.2': (700, 300, 1500, 1500),  # x, y, width, height for Camera 2
     }
 
     # Define ROI coordinates for each camera (example coordinates)
     roi_coordinates = {
-        '169.254.207.1': (500, 0, 500, 1500),  # x, y, width, height for ROI Camera 1
-        '169.254.207.2': (500, 0, 500, 1500),  # x, y, width, height for ROI Camera 2
+        '169.254.207.1': (550, 50, 300, 1000),  # x, y, width, height for ROI Camera 1
+        '169.254.207.2': (550, 50, 300, 1000),  # x, y, width, height for ROI Camera 2
     }
 
     # Initialize tree vertical status
@@ -173,7 +173,12 @@ def process_frames():
     cv2.waitKey(0)
 
     # Close all OpenCV windows
-    cv2.destroyAllWindows()
+    #cv2.destroyAllWindows()
 
 if __name__ == '__main__':
-    process_frames()
+    try:
+        process_frames()
+    except Exception as e:
+        print(f"Error: {e}")
+    finally:
+        cv2.destroyAllWindows()  # Ensure all OpenCV windows are closed
