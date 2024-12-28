@@ -15,6 +15,11 @@
         <Node name="exit_script" type="T_BOOL" access="ReadWrite" />
         <Node name="run_program" type="T_BOOL" access="ReadWrite" />
         <Node name="sessionNumber" type="T_DINT" access="ReadWrite" />
+        <Node name="set_hgh_acc" type="T_BOOL" access="ReadWrite" />
+        <Node name="set_low_acc" type="T_BOOL" access="ReadWrite" />
+        <Node name="set_nrml_acc" type="T_BOOL" access="ReadWrite" />
+        <Node name="set_vry_hgh_acc" type="T_BOOL" access="ReadWrite" />
+        <Node name="set_vry_low_acc" type="T_BOOL" access="ReadWrite" />
         <Node name="tree_non_vertical" type="T_BOOL" access="ReadWrite" />
         <Node name="tree_vertical" type="T_BOOL" access="ReadWrite" />
       </Node>

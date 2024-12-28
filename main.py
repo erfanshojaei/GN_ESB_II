@@ -4,6 +4,7 @@ import os
 import yaml
 
 from process_frames import process_frames
+from frame_config import get_frame_config
 from check_cameras import check_cameras
 from opcua_connection import connectOPCUA
 from exit_operation import exit_operation
@@ -90,8 +91,11 @@ if __name__ == "__main__":
 
                     logging.info("Planting operation is active.")
 
+                    # Retrieve the frame configuration
+                    frame_config = get_frame_config()
+
                     # Process frames and capture the returned status
-                    tree_status = process_frames(camera_ips)
+                    tree_status = process_frames(camera_ips, frame_config)  # Passing frame_config
                     logging.info(tree_status)  # Log the status returned from process_frames
 
                     # Check if tree is planted vertically and set the corresponding PLC variable

@@ -12,5 +12,6 @@ GN_Project/
     │   ├── exit_operation.py               
     │   ├── planting_operation.py           
     │   ├── main.py                         
-    │   ├── set_vertical.py                # New file for the set_vertical function
+    │   ├── set_vertical.py                 # For the set_vertical function
+    │   ├── frame_config.py                 # New file for frame configurations
     │   └── config.yaml                     # Configuration file

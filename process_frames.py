@@ -6,8 +6,16 @@ from camera_package.crop_frame import crop_frame
 from camera_package.centroid import process_cnt
 from camera import grab_frame_from_camera
 
+def process_frames(camera_ips, frame_config):
+    """
+    Processes frames from multiple cameras.
 
-def process_frames(camera_ips):
+    Parameters:
+        camera_ips (list): List of camera IP addresses.
+        frame_config (tuple): A tuple containing crop_coordinates and roi_coordinates.
+    """
+    crop_coordinates, roi_coordinates = frame_config
+
     # Define paths
     usb_path = 'E:\\'  # Adjust path for your USB device
     local_output_path = 'camera_outputs'  # Local folder for saving frames
@@ -44,18 +52,6 @@ def process_frames(camera_ips):
     if usb_connected:
         with open(run_count_file, 'w') as file:
             file.write(str(run_count))
-
-    # Define crop coordinates for each camera (example coordinates)
-    crop_coordinates = {
-        '169.254.207.1': (400, 300, 1500, 1500),  # x, y, width, height for Camera 1
-        '169.254.207.2': (700, 300, 1500, 1500),  # x, y, width, height for Camera 2
-    }
-
-    # Define ROI coordinates for each camera (example coordinates)
-    roi_coordinates = {
-        '169.254.207.1': (550, 50, 300, 1000),  # x, y, width, height for ROI Camera 1
-        '169.254.207.2': (250, 50, 300, 1000),  # x, y, width, height for ROI Camera 2
-    }
 
     # Initialize tree vertical status
     tree_is_vertical = {}
