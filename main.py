@@ -92,7 +92,11 @@ if __name__ == "__main__":
                     logging.info("Planting operation is active.")
 
                     # Retrieve the frame configuration
-                    frame_config = get_frame_config()
+                    try:
+                        frame_config = get_frame_config(objects)  # Pass objects to the function
+                    except Exception as e:
+                        logging.error(f"Failed to retrieve frame configuration: {e}")
+                        continue
 
                     # Process frames and capture the returned status
                     tree_status = process_frames(camera_ips, frame_config)  # Passing frame_config
