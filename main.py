@@ -2,6 +2,7 @@ import logging
 import time
 import os
 import yaml
+import atexit  # Import atexit module
 
 from process_frames import process_frames
 from frame_config import get_frame_config
@@ -12,6 +13,7 @@ from planting_operation import planting_operation
 from session_utils import getSessionNumber  # Importing the function
 from set_vertical import set_vertical  # Importing the set_vertical function
 from set_non_vertical import set_non_vertical  # Importing the set_non_vertical function
+from check_python_program_running import set_python_program_running, set_python_program_stopped  # Import the functions
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -36,6 +38,14 @@ def load_config():
         logging.error(f"Failed to load configuration: {e}")
         exit(1)
 
+# Cleanup function to ensure 'python_run' is set to False when the script terminates
+def cleanup():
+    logging.info("Python program is stopping. Updating PLC variable...")
+    set_python_program_stopped(objects, plcVarPath, 'python_run')
+
+# Register cleanup function to be called on program exit
+atexit.register(cleanup)
+
 # Main function
 if __name__ == "__main__":
     # Load configuration
@@ -57,6 +67,9 @@ if __name__ == "__main__":
         if objects is None:
             logging.error("Failed to connect to OPC UA server. Exiting program.")
             exit(1)
+
+        # Set Python program status to running
+        set_python_program_running(objects, plcVarPath, 'python_run')
 
         # Initialize session number
         lastSession = getSessionNumber(objects)
@@ -121,5 +134,9 @@ if __name__ == "__main__":
     except Exception as e:
         logging.error(f"An error occurred: {e}")
     finally:
+        # Set Python program status to stopped before exiting
+        logging.info("Python program stopped. Updating PLC variable...")
+        set_python_program_stopped(objects, plcVarPath, 'python_run')
+        
         # Cleanup resources (if any)
         logging.info("Cleaning up resources before exiting...")
