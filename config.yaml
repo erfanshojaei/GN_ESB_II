@@ -27,5 +27,8 @@ plc_variables:
   # Python program status
   python_run: python_run  # Indicates if the Python program is running
 
+  # New variable for Python terminal output
+  python_terminal_output: python_terminal_output  # Variable name for the output message
+
 # Maximum allowable session number before resetting
 max_session_number: 5
