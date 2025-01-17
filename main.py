@@ -36,13 +36,6 @@ def load_config():
         logging.error(f"Failed to load configuration: {e}")
         exit(1)
 
-# Cleanup function to ensure 'python_run' is set to False when the script terminates
-def cleanup():
-    logging.info("Python program is stopping. Updating PLC variable...")
-    set_python_program_stopped(objects, plcVarPath, 'python_run')
-
-# Register cleanup function to be called on program exit
-atexit.register(cleanup)
 
 # Main function
 def main():
