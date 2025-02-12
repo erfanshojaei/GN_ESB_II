@@ -2,7 +2,7 @@ import logging
 import time
 import os
 import yaml
-import atexit  # Import atexit module
+import atexit
 
 from process_frames import process_frames
 from frame_config import get_frame_config
@@ -13,6 +13,7 @@ from planting_operation import planting_operation
 from session_utils import getSessionNumber
 from set_vertical import set_vertical
 from set_non_vertical import set_non_vertical
+from send_heartbeat import send_heartbeat
 
 # Disable logging from the opcua library (if needed)
 logging.getLogger("opcua").setLevel(logging.WARNING)
@@ -36,6 +37,15 @@ def load_config():
         logging.error(f"Failed to load configuration: {e}")
         exit(1)
 
+# Graceful cleanup
+def cleanup(objects, python_run):
+    try:
+        logging.info("Python program stopped. Updating PLC variable...")
+        # Set the Python program status to stopped (if applicable)
+        # Example: set_python_status(objects, plcVarPath, python_run, 0)
+        logging.info("Cleaning up resources before exiting...")
+    except Exception as e:
+        logging.error(f"Error during cleanup: {e}")
 
 # Main function
 def main():
@@ -49,6 +59,7 @@ def main():
     session_number_key = config["plc_variables"]["session_number"]
     tree_vertical = config["plc_variables"]["tree_vertical"]
     tree_non_vertical = config["plc_variables"]["tree_non_vertical"]
+    python_heartbeat = config["plc_variables"]["python_heartbeat"]  # Added to use from config
     MAX_SESSION_NUMBER = config["max_session_number"]
 
     try:
@@ -58,6 +69,9 @@ def main():
         if objects is None:
             logging.error("Failed to connect to OPC UA server. Exiting program.")
             exit(1)
+
+        # Register cleanup function for graceful exit
+        atexit.register(cleanup, objects, python_heartbeat)
 
         # Initialize session number
         lastSession = getSessionNumber(objects)
@@ -112,15 +126,16 @@ def main():
             else:
                 logging.info("Planting operation is not active. Skipping frame processing.")
 
+            # Send heartbeat using the configured heartbeat variable name
+            send_heartbeat(objects, plcVarPath, python_heartbeat)
+
             # Add a small delay to avoid 100% CPU usage
             time.sleep(3)
 
     except Exception as e:
         logging.error(f"An error occurred: {e}")
     finally:
-        # Set Python program status to stopped before exiting
-        logging.info("Python program stopped. Updating PLC variable...")
-        logging.info("Cleaning up resources before exiting...")
+        cleanup(objects, python_heartbeat)
 
 if __name__ == "__main__":
     main()
