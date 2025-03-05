@@ -10,15 +10,19 @@ plcVarPath = ["0:Objects",
               "4:PLC_PRG",
               "var"]
 
-def exit_operation(objects, exit_script):
+exit_code = "exit_code"  # The name of the variable you want to access
+
+def exit_operation(objects):
     """
-    Checks if the exit operation is triggered by querying the PLC variable.
+    Reads the exit_code from the PLC and returns it.
     """
     try:
         temp_path = plcVarPath.copy()  # Avoid modifying the original list
-        temp_path[-1] = f"4:{exit_script}"
-        var_path = objects.get_child(temp_path)
+        temp_path[-1] = f"4:{exit_code}"    
+        var_path = objects.get_child(temp_path)  # Get the PLC variable node
+        print(var_path.get_value())
         return var_path.get_value()
+        
     except Exception as e:
-        logging.error(f"Failed to check exit operation: {e}")
+        logging.error(f"Failed to read exit_code: {e}")
         return None

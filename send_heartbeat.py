@@ -1,4 +1,5 @@
 import logging
+import time
 
 # Define a global variable for the heartbeat value
 heartbeat_value = 0
@@ -27,8 +28,9 @@ def send_heartbeat(objects, plcVarPath, python_heartbeat):
         var_path.set_value(heartbeat_value, var_type)
         
         logging.info(f"Heartbeat sent successfully: {heartbeat_value}")
+        time.sleep(1)  # Add a 1-second delay to control the toggle rate
         return True
         
     except Exception as e:
-        logging.error(f"Failed to send heartbeat for '{python_heartbeat}': {e}")
+        logging.error(f"Failed to send heartbeat for '{python_heartbeat}' at path '{temp_path}': {e}")
         return False

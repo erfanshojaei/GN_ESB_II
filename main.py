@@ -41,8 +41,8 @@ def load_config():
 def cleanup(objects, python_run):
     try:
         logging.info("Python program stopped. Updating PLC variable...")
-        # Set the Python program status to stopped (if applicable)
-        # Example: set_python_status(objects, plcVarPath, python_run, 0)
+        # Make sure to set a value for exit_code (or whatever cleanup you need to do here)
+        objects.set_value(python_run, 0)  # Example: setting heartbeat to 0 or exit code
         logging.info("Cleaning up resources before exiting...")
     except Exception as e:
         logging.error(f"Error during cleanup: {e}")
@@ -91,8 +91,9 @@ def main():
 
         # Main loop for frame processing
         while True:
-            if exit_operation(objects, exit_script):
-                logging.info("Exit operation triggered. Closing script.")
+            exit_code = exit_operation(objects)
+            if exit_code == 99:
+                logging.info("Exit code 99 received. Closing script.")
                 break
 
             # Retrieve the current session number
