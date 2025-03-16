@@ -15,6 +15,7 @@
         <Node name="exit_code" type="T_DINT" access="ReadWrite" />
         <Node name="exit_script" type="T_BOOL" access="ReadWrite" />
         <Node name="python_heartbeat" type="T_BOOL" access="ReadWrite" />
+        <Node name="run_code" type="T_DINT" access="ReadWrite" />
         <Node name="run_program" type="T_BOOL" access="ReadWrite" />
         <Node name="sessionNumber" type="T_DINT" access="ReadWrite" />
         <Node name="set_hgh_acc" type="T_BOOL" access="ReadWrite" />

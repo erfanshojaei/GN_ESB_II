@@ -39,13 +39,31 @@ def load_config():
 
 # Graceful cleanup
 def cleanup(objects, python_run):
+    """
+    Gracefully clean up by setting the appropriate PLC variable value to indicate that the Python program stopped.
+    """
     try:
         logging.info("Python program stopped. Updating PLC variable...")
-        # Make sure to set a value for exit_code (or whatever cleanup you need to do here)
-        objects.set_value(python_run, 0)  # Example: setting heartbeat to 0 or exit code
-        logging.info("Cleaning up resources before exiting...")
+
+        # Ensure python_run is a valid PLC variable name (it should be a string from the config)
+        temp_path = plcVarPath.copy()  # Make a copy of the base path
+        temp_path[-1] = f"4:{python_run}"  # Replace last element with the actual variable name
+
+        # Retrieve the OPC UA node for the variable we want to set
+        var_node = objects.get_child(temp_path)  # Get the node by using the full path
+
+        if var_node is None:
+            logging.error(f"Failed to retrieve PLC variable '{python_run}'. Skipping cleanup.")
+            return
+
+        # Set the value of the PLC variable (e.g., setting it to 0)
+        var_node.set_value(0)  # Set value to 0 or any value to indicate cleanup status
+
+        logging.info("Cleanup complete. Resources have been cleaned up.")
+
     except Exception as e:
         logging.error(f"Error during cleanup: {e}")
+
 
 # Main function
 def main():
@@ -54,8 +72,8 @@ def main():
 
     # Extract values from configuration
     camera_ips = config["camera_ips"]
-    run_program = config["plc_variables"]["run_program"]
-    exit_script = config["plc_variables"]["exit_script"]
+    run_code = config["plc_variables"]["run_code"]  # Change from 'run_program' to 'run_code'
+    exit_script = config["plc_variables"]["exit_code"]
     session_number_key = config["plc_variables"]["session_number"]
     tree_vertical = config["plc_variables"]["tree_vertical"]
     tree_non_vertical = config["plc_variables"]["tree_non_vertical"]
@@ -103,7 +121,7 @@ def main():
                 continue
 
             # Process frames if planting operation is active and session number has changed
-            if planting_operation(objects, run_program) and lastSession != session_value:
+            if planting_operation(objects, run_code) and lastSession != session_value:
                 lastSession = session_value if session_value != MAX_SESSION_NUMBER else 0
                 logging.info("Planting operation is active.")
 

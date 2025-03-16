@@ -6,8 +6,8 @@ camera_ips:
 # PLC Variable Names
 plc_variables:
   # Control variables
-  run_program: run_program           # Start planting operation
-  exit_script: exit_script           # Exit the program
+  run_code: run_code           # Start planting operation
+  exit_code: exit_code          # Exit the program
 
   # Session-related variables
   session_number: sessionNumber      # Current session number

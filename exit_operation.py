@@ -20,7 +20,7 @@ def exit_operation(objects):
         temp_path = plcVarPath.copy()  # Avoid modifying the original list
         temp_path[-1] = f"4:{exit_code}"    
         var_path = objects.get_child(temp_path)  # Get the PLC variable node
-        print(var_path.get_value())
+        #print(var_path.get_value())
         return var_path.get_value()
         
     except Exception as e:
