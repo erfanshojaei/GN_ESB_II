@@ -79,6 +79,7 @@ def main():
     tree_non_vertical = config["plc_variables"]["tree_non_vertical"]
     python_heartbeat = config["plc_variables"]["python_heartbeat"]  # Added to use from config
     MAX_SESSION_NUMBER = config["max_session_number"]
+    acc_mode = config["plc_variables"]["acc_mode"]  # Added the acc_code from the config
 
     try:
         # Connect to the OPC UA server
@@ -126,7 +127,8 @@ def main():
                 logging.info("Planting operation is active.")
 
                 try:
-                    frame_config = get_frame_config(objects)
+                    # Pass acc_code to get_frame_config
+                    frame_config = get_frame_config(objects, acc_mode)
                 except Exception as e:
                     logging.error(f"Failed to retrieve frame configuration: {e}")
                     continue

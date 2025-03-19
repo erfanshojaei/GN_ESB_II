@@ -26,19 +26,30 @@ def planting_operation(objects, run_code):
         temp_path = plcVarPath.copy()
         temp_path[-1] = f"4:{run_code}"  # Use the provided run_code variable name
 
-        # Get the PLC variable node
-        var_node = objects.get_child(temp_path)
+        # Get the PLC variable node safely
+        try:
+            var_node = objects.get_child(temp_path)
+        except Exception as e:
+            logging.error(f"Failed to access '{run_code}' variable node: {e} | Path: {temp_path}")
+            return False
+
         if var_node is None:
-            logging.error(f"Failed to retrieve '{run_code}' variable. Path: {temp_path}")
+            logging.error(f"Variable '{run_code}' not found. Path: {temp_path}")
             return False
 
         # Get the value of 'run_code'
         run_code_value = var_node.get_value()
-        #print(run_code_value)
-        logging.info(f"Retrieved '{run_code}' value: {run_code_value}")
+
+        # Ensure the value is an integer before checking
+        if not isinstance(run_code_value, int):
+            logging.error(f"Unexpected type for '{run_code}': {type(run_code_value)}. Expected int.")
+            return False
+
+        logging.debug(f"Retrieved '{run_code}' value: {run_code_value}")
 
         # Check if run_code is 100 (start planting operation)
         return run_code_value == 100
+
     except Exception as e:
         logging.error(f"Error retrieving '{run_code}' value: {e} | Path: {temp_path}")
         return False

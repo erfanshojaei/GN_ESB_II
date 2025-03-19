@@ -10,69 +10,76 @@ plcVarPath = ["0:Objects",
               "4:PLC_PRG",
               "var"]
 
-def get_frame_config(objects):
+def get_frame_config(objects, acc_mode):
     """
-    Returns crop and ROI coordinates for each camera based on active accuracy mode.
+    Retrieves crop and ROI coordinates for each camera based on the accuracy mode received from CODESYS.
 
     Args:
-        objects: The OPC UA objects node.
+        objects: The OPC UA client object.
+        acc_code: The accuracy code retrieved from the CODESYS.
 
     Returns:
         tuple: A dictionary of crop coordinates and a dictionary of ROI coordinates.
     """
     try:
-        # Query each accuracy setting from the PLC
-        accuracy_vars = ["set_vry_low_acc", "set_low_acc", "set_nrml_acc", "set_hgh_acc", "set_vry_hgh_acc"]
-        active_mode = None
+        # Define the path to access the 'acc_code' from the PLC
+        temp_path = plcVarPath.copy()
+        temp_path[-1] = f"4:{acc_mode}"  # Correctly reference the 'acc_code' variable from CODESYS
 
-        for var in accuracy_vars:
-            temp_path = plcVarPath.copy()
-            temp_path[-1] = f"4:{var}"
-            var_path = objects.get_child(temp_path)
-            value = var_path.get_value()
-            
-            if value:  # If the variable is True
-                active_mode = var
-                logging.info(f"Active accuracy mode found: {active_mode}")
-                print(f"Active accuracy mode: {active_mode}")  # Printing the active mode
-                break
+        # Get the PLC variable node
+        var_node = objects.get_child(temp_path)
+        if var_node is None:
+            logging.error(f"Failed to retrieve 'acc_code' variable. Path: {temp_path}")
+            return None, None
+
+        # Get the value of 'acc_code' (this is the code sent from CODESYS)
+        acc_mode_value = var_node.get_value()
+        logging.info(f"Retrieved 'acc_code' value: {acc_mode_value}")
+
+        # Determine active mode based on the received code
+        accuracy_map = {
+            200: "set_vry_low_acc",
+            210: "set_low_acc",
+            220: "set_nrml_acc",
+            230: "set_hgh_acc",
+            240: "set_vry_hgh_acc"
+        }
+        
+        # Default to "set_vry_low_acc" if the code is not recognized
+        active_mode = accuracy_map.get(acc_mode_value, "set_vry_low_acc")
+        logging.info(f"Active accuracy mode: {active_mode}")
 
         # Define crop coordinates based on the active mode
-        if active_mode == "set_vry_low_acc":
-            crop_coordinates = {
+        crop_coordinates_map = {
+            "set_vry_low_acc": {
                 '169.254.207.1': (100, 100, 1200, 1200),
                 '169.254.207.2': (200, 100, 1200, 1200),
-            }
-        elif active_mode == "set_low_acc":
-            crop_coordinates = {
+            },
+            "set_low_acc": {
                 '169.254.207.1': (300, 200, 1400, 1400),
                 '169.254.207.2': (400, 200, 1400, 1400),
-            }
-        elif active_mode == "set_nrml_acc":
-            crop_coordinates = {
+            },
+            "set_nrml_acc": {
                 '169.254.207.1': (400, 300, 1500, 1500),
                 '169.254.207.2': (500, 300, 1500, 1500),
-            }
-        elif active_mode == "set_hgh_acc":
-            crop_coordinates = {
+            },
+            "set_hgh_acc": {
                 '169.254.207.1': (600, 400, 1600, 1600),
                 '169.254.207.2': (700, 400, 1600, 1600),
-            }
-        elif active_mode == "set_vry_hgh_acc":
-            crop_coordinates = {
+            },
+            "set_vry_hgh_acc": {
                 '169.254.207.1': (800, 500, 1700, 1700),
                 '169.254.207.2': (900, 500, 1700, 1700),
             }
-        else:
-            # Default crop coordinates set to "set_vry_low_acc" if no mode is active
-            crop_coordinates = {
-                '169.254.207.1': (100, 100, 1200, 1200),  # Same as set_vry_low_acc
-                '169.254.207.2': (200, 100, 1200, 1200),  # Same as set_vry_low_acc
-            }
-            logging.warning("No active accuracy mode found, using 'set_vry_low_acc' default crop coordinates.")
-            print("No active accuracy mode found, using 'set_vry_low_acc' default crop coordinates.")  # Print for fallback
+        }
 
-        # Define ROI coordinates
+        # Get the crop coordinates for the active mode
+        crop_coordinates = crop_coordinates_map.get(active_mode)
+        if not crop_coordinates:
+            logging.warning(f"Invalid accuracy mode received: {acc_mode_value}, using default 'set_vry_low_acc'.")
+            crop_coordinates = crop_coordinates_map["set_vry_low_acc"]
+
+        # Define ROI coordinates (these remain constant)
         roi_coordinates = {
             '169.254.207.1': (550, 50, 300, 1000),  # x, y, width, height for ROI Camera 1
             '169.254.207.2': (250, 50, 300, 1000),  # x, y, width, height for ROI Camera 2
@@ -81,6 +88,5 @@ def get_frame_config(objects):
         return crop_coordinates, roi_coordinates
 
     except Exception as e:
-        logging.error(f"Failed to retrieve frame configuration: {e}")
-        print(f"Failed to retrieve frame configuration: {e}")  # Print error message
+        logging.error(f"Failed to retrieve frame configuration: {e} | Path: {temp_path}")
         return None, None

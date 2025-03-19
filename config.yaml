@@ -17,11 +17,7 @@ plc_variables:
   tree_non_vertical: tree_non_vertical  # Status when tree is not vertical
 
   # Accuracy level variables
-  set_vry_low_acc: set_vry_low_acc   # Very low accuracy level
-  set_low_acc: set_low_acc           # Low accuracy level
-  set_nrml_acc: set_nrml_acc         # Normal accuracy level
-  set_hgh_acc: set_hgh_acc           # High accuracy level
-  set_vry_hgh_acc: set_vry_hgh_acc   # Very high accuracy level
+  acc_mode: acc_mode
 
   # Python program status
   python_run: python_run             # Indicates if the Python program is running
