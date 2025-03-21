@@ -6,7 +6,10 @@ from camera_package.crop_frame import crop_frame
 from camera_package.centroid import process_cnt
 from camera import grab_frame_from_camera
 
-def process_frames(camera_ips, frame_config):
+
+def process_frames(camera_ips, frame_config, objects, plcVarPath, tree_status_code):
+
+
     """
     Processes frames from multiple cameras.
 
@@ -89,13 +92,32 @@ def process_frames(camera_ips, frame_config):
                 x, y, w, h = roi_coords
                 cv2.rectangle(color_binary_image, (x, y), (x + w, y + h), (0, 255, 0), 2)  # Green rectangle for ROI
 
+                last_octet = ip.split('.')[-1]  # Extract the last octet of the IP
+
                 # Check if the centroid is within the ROI for the current camera
                 if centroid is not None and (x <= centroid[0] <= x + w and y <= centroid[1] <= y + h):
                     tree_is_vertical[ip] = True
+                    status_code = 11
                     print(f"Camera {ip}: Tree is vertical.")
                 else:
                     tree_is_vertical[ip] = False
+                    status_code = 33
                     print(f"Camera {ip}: Tree is not vertical.")
+
+                number_to_send = int(f"{last_octet}{status_code}")
+                print(f"Sending number {number_to_send} to CODESYS")
+
+                # Copy the path and update the last element to refer to 'tree_status'
+                temp_path = plcVarPath.copy()
+                temp_path[-1] = f"4:{tree_status_code}"
+        
+                # Get the PLC variable using the updated path
+                var_path = objects.get_child(temp_path)
+        
+                # Get the data type of the variable and set it to the toggled value
+                var_type = var_path.get_data_type_as_variant_type()
+                var_path.set_value(number_to_send, var_type)
+
 
                 # Save frames locally
                 original_frame_filename = f"original_frame_{ip.replace('.', '_')}_run{run_count}.png"

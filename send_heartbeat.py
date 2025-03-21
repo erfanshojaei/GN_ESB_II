@@ -34,3 +34,4 @@ def send_heartbeat(objects, plcVarPath, python_heartbeat):
     except Exception as e:
         logging.error(f"Failed to send heartbeat for '{python_heartbeat}' at path '{temp_path}': {e}")
         return False
+

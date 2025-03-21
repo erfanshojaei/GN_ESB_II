@@ -11,8 +11,6 @@ from opcua_connection import connectOPCUA
 from exit_operation import exit_operation
 from planting_operation import planting_operation
 from session_utils import getSessionNumber
-from set_vertical import set_vertical
-from set_non_vertical import set_non_vertical
 from send_heartbeat import send_heartbeat
 
 # Disable logging from the opcua library (if needed)
@@ -73,13 +71,11 @@ def main():
     # Extract values from configuration
     camera_ips = config["camera_ips"]
     run_code = config["plc_variables"]["run_code"]  # Change from 'run_program' to 'run_code'
-    exit_script = config["plc_variables"]["exit_code"]
-    session_number_key = config["plc_variables"]["session_number"]
-    tree_vertical = config["plc_variables"]["tree_vertical"]
-    tree_non_vertical = config["plc_variables"]["tree_non_vertical"]
     python_heartbeat = config["plc_variables"]["python_heartbeat"]  # Added to use from config
     MAX_SESSION_NUMBER = config["max_session_number"]
     acc_mode = config["plc_variables"]["acc_mode"]  # Added the acc_code from the config
+    tree_status_code = config["plc_variables"]["tree_status_code"]
+    camera_status_code = config["plc_variables"]["camera_status_code"]
 
     try:
         # Connect to the OPC UA server
@@ -98,16 +94,6 @@ def main():
             logging.error("Failed to retrieve initial session number. Exiting program.")
             exit(1)
 
-        # Check the cameras before proceeding
-        logging.info("Checking camera accessibility...")
-        camera_status = check_cameras(camera_ips)
-
-        if not camera_status:
-            logging.error("One or more cameras are not accessible. Exiting the program.")
-            exit(1)
-
-        logging.info("All cameras are accessible. Proceeding with frame processing...")
-
         # Main loop for frame processing
         while True:
             exit_code = exit_operation(objects)
@@ -120,6 +106,17 @@ def main():
             if session_value is None:
                 logging.warning("Session number retrieval failed. Skipping iteration.")
                 continue
+
+            # Check the cameras before proceeding
+            logging.info("Checking camera accessibility...")
+            camera_status = check_cameras(camera_ips, objects, plcVarPath, camera_status_code)
+
+            if not camera_status:
+                logging.error("One or more cameras are not accessible. Skipping this iteration.")
+                time.sleep(3)  # Delay before retrying in the next loop iteration
+                continue
+
+            logging.info("All cameras are accessible. Proceeding with frame processing...")
 
             # Process frames if planting operation is active and session number has changed
             if planting_operation(objects, run_code) and lastSession != session_value:
@@ -134,16 +131,9 @@ def main():
                     continue
 
                 # Process frames and capture the returned status
-                tree_status = process_frames(camera_ips, frame_config)
+                tree_status = process_frames(camera_ips, frame_config, objects, plcVarPath, tree_status_code)
                 logging.info(tree_status)
 
-                # Check if tree is planted vertically and set the corresponding PLC variable
-                if tree_status == "The tree is planted vertically.":
-                    set_vertical(objects, plcVarPath, tree_vertical)
-                elif tree_status == "The tree is not planted vertically.":
-                    set_non_vertical(objects, plcVarPath, tree_non_vertical)
-                else:
-                    logging.info("Unknown situation.")
             else:
                 logging.info("Planting operation is not active. Skipping frame processing.")
 

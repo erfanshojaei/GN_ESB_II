@@ -11,16 +11,15 @@ plc_variables:
 
   # Session-related variables
   session_number: sessionNumber      # Current session number
-
-  # Tree planting status variables
-  tree_vertical: tree_vertical       # Status when tree is vertical
-  tree_non_vertical: tree_non_vertical  # Status when tree is not vertical
-
+  
   # Accuracy level variables
   acc_mode: acc_mode
 
-  # Python program status
-  python_run: python_run             # Indicates if the Python program is running
+  # Camera status
+  camera_status_code: camera_status_code
+
+  # Tree status
+  tree_status_code: tree_status_code
 
   # Python heartbeat variable
   python_heartbeat: python_heartbeat # Heartbeat signal for communication check
