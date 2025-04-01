@@ -8,7 +8,8 @@ def connectOPCUA():
     Implements retry mechanism if connection fails.
     Returns the root node if successful, else None.
     """
-    hostname = "DESKTOP-761BEPG"  # Hostname of the OPC UA server
+    #hostname = "DESKTOP-761BEPG"  # Hostname of the OPC UA server
+    hostname = "192.168.82.247"  # Hostname of the OPC UA server
     port = 4840  # Port number (default for OPC UA)
     retries = 3  # Number of retries
     delay = 5  # Delay between retries in seconds
