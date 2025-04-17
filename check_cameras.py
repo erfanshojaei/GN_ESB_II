@@ -31,11 +31,11 @@ def check_cameras(camera_ips, objects, plcVarPath, camera_status_code):
 
         except RuntimeError as e:
             results[ip] = f"Error: {e}"
-            camera_check_code = 666  # Runtime error
+            camera_check_code = 555  # Runtime error
 
         except Exception as e:
             results[ip] = f"Unexpected error: {e}"
-            camera_check_code = 666  # General error
+            camera_check_code = 555  # General error
 
         # Construct the number to send to CODESYS
         number_to_send = int(f"{last_octet}{camera_check_code}")

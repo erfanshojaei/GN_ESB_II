@@ -1,5 +1,6 @@
 import cv2
 import os
+import time
 from datetime import datetime
 from camera_package.binary_image_processing import process_image
 from camera_package.crop_frame import crop_frame
@@ -117,6 +118,7 @@ def process_frames(camera_ips, frame_config, objects, plcVarPath, tree_status_co
                 # Get the data type of the variable and set it to the toggled value
                 var_type = var_path.get_data_type_as_variant_type()
                 var_path.set_value(number_to_send, var_type)
+                #time.sleep(2)
 
 
                 # Save frames locally

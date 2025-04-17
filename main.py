@@ -19,11 +19,14 @@ logging.getLogger("opcua").setLevel(logging.WARNING)
 # Set up logging to capture only your own messages
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+
+
 # PLC variable path (this is the base path used to access PLC variables)
 plcVarPath = [
-    '0:Objects', '2:DeviceSet', '4:ecomatDisplay/12"/16:10/Touch', 
-    '3:Resources', '4:Rapid_Planter_Controls', '3:GlobalVars', '4:GVL_Vision_System' , 'var'
+    "0:Objects", "2:DeviceSet", "4:CODESYS Control Win V3 x64", 
+    "3:Resources", "4:Application", "3:Programs", "4:PLC_PRG", "var"
 ]
+
 
 # Load configuration from YAML file
 def load_config():
