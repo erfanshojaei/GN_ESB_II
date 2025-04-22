@@ -3,6 +3,12 @@ camera_ips:
   - 169.254.207.1  # Camera 1
   - 169.254.207.2  # Camera 2
 
+  - 169.254.207.3  # Camera 3
+  - 169.254.207.4  # Camera 4
+
+  - 169.254.207.5  # Camera 5
+  - 169.254.207.6  # Camera 6
+
 # PLC Variable Names
 plc_variables:
   # Control variables
@@ -16,7 +22,12 @@ plc_variables:
   acc_mode: acc_mode
 
   # Camera status
-  camera_status_code: camera_status_code
+  camera_status_code_1: camera_status_code_1
+  camera_status_code_2: camera_status_code_2
+  camera_status_code_3: camera_status_code_3
+  camera_status_code_4: camera_status_code_4
+  camera_status_code_5: camera_status_code_5
+  camera_status_code_6: camera_status_code_6
 
   # Tree status
   tree_status_code: tree_status_code

@@ -1,51 +1,70 @@
 import logging
-from camera import grab_frame_from_camera
+from pypylon import pylon
 
-def check_cameras(camera_ips, objects, plcVarPath, camera_status_code):
+def check_cameras(camera_ips, objects, plcVarPath,
+                  camera_status_code_1, camera_status_code_2,
+                  camera_status_code_3, camera_status_code_4,
+                  camera_status_code_5, camera_status_code_6):
     """
     Checks if the cameras are connected and able to capture frames.
-
-    Parameters:
-        camera_ips (list): List of IP addresses for the cameras to check.
-
-    Returns:
-        dict: A dictionary with IP addresses as keys and status messages as values.
+    Sends each camera's status code to its respective OPC UA variable.
+    Returns a list of status codes for each camera.
     """
-    results = {}
+    status_codes = []  # Store status codes for all 6 cameras
 
     for ip in camera_ips:
-        last_octet = ip.split('.')[-1]  # Extract the last octet of the IP
-        camera_check_code = 444  # Default to success (444) initially
+        camera_check_code = 99  # Default to 99 (not set)
 
         try:
-            print(f"Checking camera with IP: {ip}")
-            frame = grab_frame_from_camera(ip)
-            if frame is None:
-                raise ValueError("Failed to capture frame.")  # Simplified handling of frame failure
+            logging.info(f"Checking camera with IP: {ip}")
 
-            results[ip] = "Connection successful, frame captured."
+            tl_factory = pylon.TlFactory.GetInstance()
+            devices = tl_factory.EnumerateDevices()
 
-        except ValueError:
-            results[ip] = "Failed to capture frame."
-            camera_check_code = 555  # Failed to capture frame
+            camera = None
+            for device in devices:
+                if hasattr(device, "GetIpAddress") and device.GetIpAddress() == ip:
+                    camera = pylon.InstantCamera(tl_factory.CreateDevice(device))
+                    break
 
-        except RuntimeError as e:
-            results[ip] = f"Error: {e}"
-            camera_check_code = 555  # Runtime error
+            if not camera:
+                logging.error(f"Camera with IP {ip} not found.")
+                status_codes.append(camera_check_code)
+                continue
+
+            camera.Open()
+            camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
+            grab_result = camera.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
+
+            if grab_result.GrabSucceeded():
+                logging.info(f"Camera {ip} connected successfully.")
+                camera_check_code = 1
+                grab_result.Release()
+            else:
+                logging.error(f"Failed to grab a frame from camera with IP {ip}.")
+                grab_result.Release()
+
+            camera.StopGrabbing()
+            camera.Close()
 
         except Exception as e:
-            results[ip] = f"Unexpected error: {e}"
-            camera_check_code = 555  # General error
+            logging.error(f"Unexpected error while checking camera {ip}: {e}")
+        finally:
+            status_codes.append(camera_check_code)
 
-        # Construct the number to send to CODESYS
-        number_to_send = int(f"{last_octet}{camera_check_code}")
-        print(f"Sending number {number_to_send} to CODESYS")
-        
-        # Update the PLC variable path with the new status code
-        temp_path = plcVarPath[:-1] + [f"4:{camera_status_code}"]
-        
-        # Get the PLC variable and set the value
-        var_path = objects.get_child(temp_path)
-        var_path.set_value(number_to_send, var_path.get_data_type_as_variant_type())
+    # Send each camera status to CODESYS individually
+    camera_codes = [
+        camera_status_code_1, camera_status_code_2,
+        camera_status_code_3, camera_status_code_4,
+        camera_status_code_5, camera_status_code_6
+    ]
 
-    return results
+    for idx in range(min(len(status_codes), 6)):
+        try:
+            temp_path = plcVarPath[:-1] + [f"4:{camera_codes[idx]}"]
+            var_node = objects.get_child(temp_path)
+            var_node.set_value(status_codes[idx], var_node.get_data_type_as_variant_type())
+        except Exception as e:
+            logging.error(f"Error sending status for {camera_ips[idx]} to CODESYS: {e}")
+
+    return status_codes

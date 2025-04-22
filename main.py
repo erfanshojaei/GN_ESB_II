@@ -1,6 +1,7 @@
 import logging
 import time
 import os
+import sys
 import yaml
 import atexit
 
@@ -13,20 +14,20 @@ from planting_operation import planting_operation
 from session_utils import getSessionNumber
 from send_heartbeat import send_heartbeat
 
-# Disable logging from the opcua library (if needed)
+# Disable logging from the opcua library
 logging.getLogger("opcua").setLevel(logging.WARNING)
 
-# Set up logging to capture only your own messages
+# Set up logging to capture only custom messages
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-
-
-# PLC variable path (this is the base path used to access PLC variables)
+# PLC variable path (hierarchical path to variables)
 plcVarPath = [
     "0:Objects", "2:DeviceSet", "4:CODESYS Control Win V3 x64", 
     "3:Resources", "4:Application", "3:Programs", "4:PLC_PRG", "var"
 ]
 
+# Constants
+EXIT_CODE = 99
 
 # Load configuration from YAML file
 def load_config():
@@ -36,120 +37,103 @@ def load_config():
             return yaml.safe_load(config_file)
     except Exception as e:
         logging.error(f"Failed to load configuration: {e}")
-        exit(1)
+        sys.exit(1)
 
-# Graceful cleanup
+# Graceful cleanup function
 def cleanup(objects, python_run):
-    """
-    Gracefully clean up by setting the appropriate PLC variable value to indicate that the Python program stopped.
-    """
     try:
         logging.info("Python program stopped. Updating PLC variable...")
 
-        # Ensure python_run is a valid PLC variable name (it should be a string from the config)
-        temp_path = plcVarPath.copy()  # Make a copy of the base path
-        temp_path[-1] = f"4:{python_run}"  # Replace last element with the actual variable name
+        temp_path = plcVarPath.copy()
+        temp_path[-1] = f"4:{python_run}"
 
-        # Retrieve the OPC UA node for the variable we want to set
-        var_node = objects.get_child(temp_path)  # Get the node by using the full path
+        var_node = objects.get_child(temp_path)
 
         if var_node is None:
             logging.error(f"Failed to retrieve PLC variable '{python_run}'. Skipping cleanup.")
             return
 
-        # Set the value of the PLC variable (e.g., setting it to 0)
-        var_node.set_value(0)  # Set value to 0 or any value to indicate cleanup status
-
+        var_node.set_value(0)
         logging.info("Cleanup complete. Resources have been cleaned up.")
-
     except Exception as e:
         logging.error(f"Error during cleanup: {e}")
 
-
-# Main function
+# Main logic
 def main():
-    # Load configuration
     config = load_config()
 
-    # Extract values from configuration
     camera_ips = config["camera_ips"]
-    run_code = config["plc_variables"]["run_code"]  # Change from 'run_program' to 'run_code'
-    python_heartbeat = config["plc_variables"]["python_heartbeat"]  # Added to use from config
+    run_code = config["plc_variables"]["run_code"]
+    python_heartbeat = config["plc_variables"]["python_heartbeat"]
     MAX_SESSION_NUMBER = config["max_session_number"]
-    acc_mode = config["plc_variables"]["acc_mode"]  # Added the acc_code from the config
+    acc_mode = config["plc_variables"]["acc_mode"]
     tree_status_code = config["plc_variables"]["tree_status_code"]
-    camera_status_code = config["plc_variables"]["camera_status_code"]
+    camera_status_code_1 = config["plc_variables"]["camera_status_code_1"]
+    camera_status_code_2 = config["plc_variables"]["camera_status_code_2"]
+    camera_status_code_3 = config["plc_variables"]["camera_status_code_3"]
+    camera_status_code_4 = config["plc_variables"]["camera_status_code_4"]
+    camera_status_code_5 = config["plc_variables"]["camera_status_code_5"]
+    camera_status_code_6 = config["plc_variables"]["camera_status_code_6"]
 
     try:
-        # Connect to the OPC UA server
         logging.info("Connecting to the OPC UA server...")
         objects = connectOPCUA()
         if objects is None:
             logging.error("Failed to connect to OPC UA server. Exiting program.")
-            exit(1)
+            sys.exit(1)
 
-        # Register cleanup function for graceful exit
+        # Register cleanup for safe shutdown
         atexit.register(cleanup, objects, python_heartbeat)
 
-        # Initialize session number
         lastSession = getSessionNumber(objects)
         if lastSession is None:
             logging.error("Failed to retrieve initial session number. Exiting program.")
-            exit(1)
+            sys.exit(1)
 
-        # Main loop for frame processing
         while True:
-            exit_code = exit_operation(objects)
-            if exit_code == 99:
-                logging.info("Exit code 99 received. Closing script.")
+            if exit_operation(objects) == EXIT_CODE:
+                logging.info(f"Exit code {EXIT_CODE} received. Closing script.")
                 break
 
-            # Retrieve the current session number
             session_value = getSessionNumber(objects)
             if session_value is None:
                 logging.warning("Session number retrieval failed. Skipping iteration.")
                 continue
 
-            # Check the cameras before proceeding
             logging.info("Checking camera accessibility...")
-            camera_status = check_cameras(camera_ips, objects, plcVarPath, camera_status_code)
+            camera_status = check_cameras(camera_ips, objects, plcVarPath, 
+                                          camera_status_code_1, camera_status_code_2, 
+                                          camera_status_code_3, camera_status_code_4,
+                                          camera_status_code_5, camera_status_code_6)
 
             if not camera_status:
                 logging.error("One or more cameras are not accessible. Skipping this iteration.")
-                time.sleep(3)  # Delay before retrying in the next loop iteration
+                time.sleep(3)
                 continue
 
-            logging.info("All cameras are accessible. Proceeding with frame processing...")
-
-            # Process frames if planting operation is active and session number has changed
             if planting_operation(objects, run_code) and lastSession != session_value:
                 lastSession = session_value if session_value != MAX_SESSION_NUMBER else 0
                 logging.info("Planting operation is active.")
 
                 try:
-                    # Pass acc_code to get_frame_config
                     frame_config = get_frame_config(objects, acc_mode)
                 except Exception as e:
                     logging.error(f"Failed to retrieve frame configuration: {e}")
                     continue
 
-                # Process frames and capture the returned status
                 tree_status = process_frames(camera_ips, frame_config, objects, plcVarPath, tree_status_code)
                 logging.info(tree_status)
-
             else:
                 logging.info("Planting operation is not active. Skipping frame processing.")
 
-            # Send heartbeat using the configured heartbeat variable name
             send_heartbeat(objects, plcVarPath, python_heartbeat)
-
-            # Add a small delay to avoid 100% CPU usage
             time.sleep(3)
 
     except Exception as e:
         logging.error(f"An error occurred: {e}")
     finally:
-        cleanup(objects, python_heartbeat)
+        if 'objects' in locals() and objects is not None:
+            cleanup(objects, python_heartbeat)
 
 if __name__ == "__main__":
     main()

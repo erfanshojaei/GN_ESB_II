@@ -1,4 +1,3 @@
-# camera.py
 from pypylon import pylon
 
 def grab_frame_from_camera(ip_address, timeout=5000):
@@ -15,41 +14,43 @@ def grab_frame_from_camera(ip_address, timeout=5000):
     Raises:
         RuntimeError: If the camera is not found or frame grab fails.
     """
-    # Create an instance of the camera factory
     tl_factory = pylon.TlFactory.GetInstance()
     devices = tl_factory.EnumerateDevices()
 
-    # Find the device that matches the specified IP address
+    print("Available cameras:")
+    for device in devices:
+        try:
+            ip = device.GetPropertyValue("IpAddress")
+            print(f"- {device.GetFriendlyName()} @ {ip}")
+        except Exception as e:
+            print(f"- Failed to read device IP: {e}")
+
     camera = None
     for device in devices:
-        if hasattr(device, "GetIpAddress") and device.GetIpAddress() == ip_address:
-            camera = pylon.InstantCamera(tl_factory.CreateDevice(device))
-            break
+        try:
+            if device.GetPropertyValue("IpAddress") == ip_address:
+                camera = pylon.InstantCamera(tl_factory.CreateDevice(device))
+                break
+        except Exception:
+            continue
 
     if not camera:
         raise RuntimeError(f"Camera with IP address {ip_address} not found.")
 
     try:
-        # Open the camera
         camera.Open()
-
-        # Start grabbing frames
         camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
-
-        # Retrieve a frame
         grab_result = camera.RetrieveResult(timeout, pylon.TimeoutHandling_ThrowException)
 
         try:
             if grab_result.GrabSucceeded():
-                # Convert the image to a format suitable for OpenCV
                 frame = grab_result.Array
             else:
                 raise RuntimeError("Error grabbing frame.")
         finally:
-            # Ensure grab result is released
             grab_result.Release()
+
     finally:
-        # Ensure resources are released
         if camera.IsGrabbing():
             camera.StopGrabbing()
         if camera.IsOpen():
