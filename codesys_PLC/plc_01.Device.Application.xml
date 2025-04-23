@@ -8,6 +8,7 @@
   <TypeList>
     <TypeSimple name="T_BOOL" size="1" swapsize="0" typeclass="Bool" iecname="BOOL" />
     <TypeSimple name="T_DINT" size="4" swapsize="4" typeclass="DInt" iecname="DINT" />
+    <TypeSimple name="T_UDINT" size="4" swapsize="4" typeclass="UDInt" iecname="UDINT" />
     <TypeSimple name="T_USINT" size="1" swapsize="1" typeclass="USInt" iecname="USINT" />
     <TypeSimple name="T_WORD" size="2" swapsize="2" typeclass="Word" iecname="WORD" />
     <TypeUserDef name="T_CTU" size="8" nativesize="24" typeclass="Userdef" pouclass="FUNCTION_BLOCK" iecname="CTU">
@@ -21,7 +22,7 @@
   <NodeList>
     <Node name="Application" nodeflags="NodeTypeBranchNode BranchNodeApplicationName">
       <Node name="PLC_PRG" nodeflags="NodeTypeBranchNode SigTypeProgram">
-        <Node name="acc_mode" nodeflags="SigTypeProgram ExportedVariable" type="T_DINT" access="ReadWrite" />
+        <Node name="acc_mode" nodeflags="SigTypeProgram ExportedVariable" type="T_USINT" access="ReadWrite" />
         <Node name="camera_status_code_1" nodeflags="SigTypeProgram ExportedVariable" type="T_USINT" access="ReadWrite" />
         <Node name="camera_status_code_2" nodeflags="SigTypeProgram ExportedVariable" type="T_USINT" access="ReadWrite" />
         <Node name="camera_status_code_3" nodeflags="SigTypeProgram ExportedVariable" type="T_USINT" access="ReadWrite" />
@@ -30,9 +31,9 @@
         <Node name="camera_status_code_6" nodeflags="SigTypeProgram ExportedVariable" type="T_USINT" access="ReadWrite" />
         <Node name="exit_code" nodeflags="SigTypeProgram ExportedVariable" type="T_DINT" access="ReadWrite" />
         <Node name="python_heartbeat" nodeflags="SigTypeProgram ExportedVariable" type="T_BOOL" access="ReadWrite" />
-        <Node name="run_code" nodeflags="SigTypeProgram ExportedVariable" type="T_DINT" access="ReadWrite" />
+        <Node name="run_code" nodeflags="SigTypeProgram ExportedVariable" type="T_USINT" access="ReadWrite" />
         <Node name="SessionCounter" nodeflags="SigTypeProgram ExportedVariable" type="T_CTU" access="ReadWrite" />
-        <Node name="sessionNumber" nodeflags="SigTypeProgram ExportedVariable" type="T_DINT" access="ReadWrite" />
+        <Node name="sessionNumber" nodeflags="SigTypeProgram ExportedVariable" type="T_UDINT" access="ReadWrite" />
         <Node name="set_hgh_acc" nodeflags="SigTypeProgram ExportedVariable" type="T_BOOL" access="ReadWrite" />
         <Node name="set_low_acc" nodeflags="SigTypeProgram ExportedVariable" type="T_BOOL" access="ReadWrite" />
         <Node name="set_nrml_acc" nodeflags="SigTypeProgram ExportedVariable" type="T_BOOL" access="ReadWrite" />
