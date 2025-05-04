@@ -8,9 +8,11 @@ def check_cameras(camera_ips, objects, plcVarPath,
     """
     Checks if the cameras are connected and able to capture frames.
     Sends each camera's status code to its respective OPC UA variable.
-    Returns a list of status codes for each camera.
+    Returns a list of status codes for each camera, along with arrays of connected and not connected cameras.
     """
     status_codes = []  # Store status codes for all 6 cameras
+    connected_cameras = []  # List to store connected camera IPs
+    not_connected_cameras = []  # List to store not connected camera IPs
 
     for ip in camera_ips:
         camera_check_code = 99  # Default to 99 (not set)
@@ -18,8 +20,14 @@ def check_cameras(camera_ips, objects, plcVarPath,
         try:
             logging.info(f"Checking camera with IP: {ip}")
 
+            # Enumerate devices
             tl_factory = pylon.TlFactory.GetInstance()
             devices = tl_factory.EnumerateDevices()
+            if not devices:
+                logging.error("No devices found. Check camera connections.")
+                not_connected_cameras.append(ip)
+                status_codes.append(camera_check_code)
+                continue
 
             camera = None
             for device in devices:
@@ -28,20 +36,24 @@ def check_cameras(camera_ips, objects, plcVarPath,
                     break
 
             if not camera:
-                logging.error(f"Camera with IP {ip} not found.")
+                logging.error(f"Camera with IP {ip} not found or failed to connect.")
+                not_connected_cameras.append(ip)
                 status_codes.append(camera_check_code)
                 continue
 
+            # Attempt to connect to the camera and grab a frame
             camera.Open()
             camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
-            grab_result = camera.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
+            grab_result = camera.RetrieveResult(10000, pylon.TimeoutHandling_ThrowException)  # Increased timeout
 
             if grab_result.GrabSucceeded():
                 logging.info(f"Camera {ip} connected successfully.")
                 camera_check_code = 1
+                connected_cameras.append(ip)
                 grab_result.Release()
             else:
-                logging.error(f"Failed to grab a frame from camera with IP {ip}.")
+                logging.error(f"Failed to grab a frame from camera with IP {ip}. Error: {grab_result.GetErrorDescription()}")
+                not_connected_cameras.append(ip)
                 grab_result.Release()
 
             camera.StopGrabbing()
@@ -49,7 +61,12 @@ def check_cameras(camera_ips, objects, plcVarPath,
 
         except Exception as e:
             logging.error(f"Unexpected error while checking camera {ip}: {e}")
+            not_connected_cameras.append(ip)
         finally:
+            if camera:
+                camera.StopGrabbing()
+                camera.Close()
+
             status_codes.append(camera_check_code)
 
     # Send each camera status to CODESYS individually
@@ -67,4 +84,4 @@ def check_cameras(camera_ips, objects, plcVarPath,
         except Exception as e:
             logging.error(f"Error sending status for {camera_ips[idx]} to CODESYS: {e}")
 
-    return status_codes
+    return status_codes, connected_cameras, not_connected_cameras

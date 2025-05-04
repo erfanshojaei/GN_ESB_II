@@ -47,7 +47,7 @@ def planting_operation(objects, run_code):
 
         logging.debug(f"Retrieved '{run_code}' value: {run_code_value}")
 
-        # Check if run_code is 100 (start planting operation)
+        # Check if run_code is 1 (start planting operation)
         return run_code_value == 1
 
     except Exception as e:

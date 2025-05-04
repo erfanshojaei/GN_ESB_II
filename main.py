@@ -92,7 +92,7 @@ def main():
                 continue
 
             logging.info("Checking camera accessibility...")
-            camera_status = check_cameras(
+            camera_status, connected_cameras, not_connected_cameras = check_cameras(
                 camera_ips, objects, PLC_VAR_PATH,
                 plc_vars["camera_status_code_1"],
                 plc_vars["camera_status_code_2"],
@@ -117,10 +117,15 @@ def main():
                     logging.error(f"Error retrieving frame config: {e}")
                     continue
 
-                status = process_frames(
-                    camera_ips, frame_config, objects, PLC_VAR_PATH, plc_vars["tree_status_code"]
-                )
-                logging.info(status)
+                # Only process frames for the connected cameras
+                if connected_cameras:
+                    logging.info(f"Processing frames for connected cameras: {connected_cameras}")
+                    status = process_frames(
+                        connected_cameras, frame_config, objects, PLC_VAR_PATH, plc_vars["tree_status_code"]
+                    )
+                    logging.info(status)
+                else:
+                    logging.warning("No connected cameras. Skipping frame processing.")
             else:
                 logging.info("Planting not active. Skipping frame processing.")
 

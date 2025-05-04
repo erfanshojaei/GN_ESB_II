@@ -1,56 +1,55 @@
+import logging
 from pypylon import pylon
 
-def grab_frame_from_camera(ip_address, timeout=5000):
+# Set up logging
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+
+def grab_frame_from_camera(ip_address, timeout=10000):
     """
-    Grabs a single frame from a camera with the specified IP address.
-
-    Args:
-        ip_address (str): The IP address of the camera.
-        timeout (int): Timeout in milliseconds for frame retrieval.
-
-    Returns:
-        np.ndarray: The grabbed frame as an image array.
-
-    Raises:
-        RuntimeError: If the camera is not found or frame grab fails.
+    Attempts to grab a single frame from the camera with the specified IP address.
+    Returns the frame (numpy array) if successful.
+    Raises RuntimeError if the camera is not found or frame cannot be grabbed.
     """
+    logging.info(f"Attempting to grab frame from camera with IP: {ip_address}")
+
+    # Create the transport layer factory instance
     tl_factory = pylon.TlFactory.GetInstance()
+
+    # Enumerate connected devices
     devices = tl_factory.EnumerateDevices()
+    logging.info(f"Devices found: {len(devices)}")
 
-    print("Available cameras:")
+    # Check all detected devices and log their IP addresses
     for device in devices:
         try:
-            ip = device.GetPropertyValue("IpAddress")
-            print(f"- {device.GetFriendlyName()} @ {ip}")
-        except Exception as e:
-            print(f"- Failed to read device IP: {e}")
-
-    camera = None
-    for device in devices:
-        try:
-            if device.GetPropertyValue("IpAddress") == ip_address:
+            device_ip = device.GetIpAddress()
+            logging.info(f"Found device with IP: {device_ip}")
+            if device_ip == ip_address:
                 camera = pylon.InstantCamera(tl_factory.CreateDevice(device))
+                logging.info(f"Camera with IP {ip_address} found.")
                 break
-        except Exception:
+        except Exception as e:
+            logging.warning(f"Could not read IP from device: {e}")
             continue
-
-    if not camera:
+    else:
         raise RuntimeError(f"Camera with IP address {ip_address} not found.")
 
     try:
+        # Open camera and start grabbing frames
         camera.Open()
         camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
         grab_result = camera.RetrieveResult(timeout, pylon.TimeoutHandling_ThrowException)
 
-        try:
-            if grab_result.GrabSucceeded():
-                frame = grab_result.Array
-            else:
-                raise RuntimeError("Error grabbing frame.")
-        finally:
-            grab_result.Release()
-
+        # Check if the frame was successfully grabbed
+        if grab_result.GrabSucceeded():
+            frame = grab_result.Array
+            logging.info(f"Successfully grabbed frame from camera {ip_address}")
+        else:
+            raise RuntimeError(f"Failed to grab frame from camera {ip_address}.")
     finally:
+        # Release result and clean up camera resources
+        if 'grab_result' in locals() and grab_result.IsValid():
+            grab_result.Release()
         if camera.IsGrabbing():
             camera.StopGrabbing()
         if camera.IsOpen():
