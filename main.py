@@ -121,9 +121,10 @@ def main():
                 if connected_cameras:
                     logging.info(f"Processing frames for connected cameras: {connected_cameras}")
                     status = process_frames(
-                        connected_cameras, frame_config, objects, PLC_VAR_PATH, plc_vars["tree_status_code"]
+                        connected_cameras, frame_config, objects
                     )
                     logging.info(status)
+                    
                 else:
                     logging.warning("No connected cameras. Skipping frame processing.")
             else:

@@ -8,7 +8,7 @@ from camera_package.centroid import process_cnt
 from camera import grab_frame_from_camera
 
 
-def process_frames(camera_ips, frame_config, objects, plcVarPath, tree_status_code):
+def process_frames(camera_ips, frame_config, objects):
 
 
     """
@@ -103,22 +103,7 @@ def process_frames(camera_ips, frame_config, objects, plcVarPath, tree_status_co
                 else:
                     tree_is_vertical[ip] = False
                     status_code = 33
-                    print(f"Camera {ip}: Tree is not vertical.")
-
-                number_to_send = int(f"{last_octet}{status_code}")
-                print(f"Sending number {number_to_send} to CODESYS")
-
-                # Copy the path and update the last element to refer to 'tree_status'
-                temp_path = plcVarPath.copy()
-                temp_path[-1] = f"4:{tree_status_code}"
-        
-                # Get the PLC variable using the updated path
-                var_path = objects.get_child(temp_path)
-        
-                # Get the data type of the variable and set it to the toggled value
-                var_type = var_path.get_data_type_as_variant_type()
-                var_path.set_value(number_to_send, var_type)
-                #time.sleep(2)
+                    print(f"Camera {ip}: Tree is not vertical.")                 
 
 
                 # Save frames locally
@@ -153,9 +138,5 @@ def process_frames(camera_ips, frame_config, objects, plcVarPath, tree_status_co
             tree_is_vertical[ip] = False
 
     # Return the overall status of the tree after checking all cameras
-    if all(tree_is_vertical.values()):
-        print("The tree is planted vertically.")
-        return "The tree is planted vertically."
-    else:
-        print("The tree is not planted vertically.")
-        return "The tree is not planted vertically."
+    return dict(tree_is_vertical)
+    

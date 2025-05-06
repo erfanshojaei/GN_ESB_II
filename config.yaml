@@ -30,7 +30,6 @@ plc_variables:
   camera_status_code_6: camera_status_code_6
 
   # Tree status
-  tree_status_code: tree_status_code
 
   # Python heartbeat variable
   python_heartbeat: python_heartbeat # Heartbeat signal for communication check
