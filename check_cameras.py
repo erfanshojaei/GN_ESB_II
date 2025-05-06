@@ -24,7 +24,7 @@ def check_cameras(camera_ips, objects, plcVarPath,
             tl_factory = pylon.TlFactory.GetInstance()
             devices = tl_factory.EnumerateDevices()
             if not devices:
-                logging.error("No devices found. Check camera connections.")
+                logging.error(f"No devices found. Check camera connections. IP: {ip}")
                 not_connected_cameras.append(ip)
                 status_codes.append(camera_check_code)
                 continue
@@ -46,7 +46,7 @@ def check_cameras(camera_ips, objects, plcVarPath,
             camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
             grab_result = camera.RetrieveResult(10000, pylon.TimeoutHandling_ThrowException)  # Increased timeout
 
-            if grab_result.GrabSucceeded():
+            if grab_result and grab_result.GrabSucceeded():
                 logging.info(f"Camera {ip} connected successfully.")
                 camera_check_code = 1
                 connected_cameras.append(ip)
@@ -63,7 +63,8 @@ def check_cameras(camera_ips, objects, plcVarPath,
             logging.error(f"Unexpected error while checking camera {ip}: {e}")
             not_connected_cameras.append(ip)
         finally:
-            if camera:
+            # Ensure the camera is properly stopped and closed even if an error occurs
+            if camera and camera.IsGrabbing():
                 camera.StopGrabbing()
                 camera.Close()
 
@@ -81,6 +82,7 @@ def check_cameras(camera_ips, objects, plcVarPath,
             temp_path = plcVarPath[:-1] + [f"4:{camera_codes[idx]}"]
             var_node = objects.get_child(temp_path)
             var_node.set_value(status_codes[idx], var_node.get_data_type_as_variant_type())
+            logging.info(f"Sent status code {status_codes[idx]} for camera with IP {camera_ips[idx]}")
         except Exception as e:
             logging.error(f"Error sending status for {camera_ips[idx]} to CODESYS: {e}")
 

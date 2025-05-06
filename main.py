@@ -62,7 +62,6 @@ def cleanup(objects, heartbeat_var):
 # --- Main Function ---
 def main():
     config = load_config()
-
     camera_ips = config["camera_ips"]
     plc_vars = config["plc_variables"]
     max_session = config["max_session_number"]
@@ -102,6 +101,20 @@ def main():
                 plc_vars["camera_status_code_6"]
             )
 
+            
+            # ✅ UPDATED: Log connected camera statuses (vertical/non-vertical)
+            if connected_cameras:
+                for camera in connected_cameras:
+                    logging.info(f"Camera {camera} is connected.")
+            else:
+                logging.warning("No connected cameras. Skipping frame processing.")
+
+            # Log disconnected cameras
+            if not_connected_cameras:
+                for camera in not_connected_cameras:
+                    logging.error(f"Camera {camera} is not connected.")
+
+            # Skip if no connected cameras or failure in connection check
             if not camera_status:
                 logging.error("Camera check failed. Skipping iteration.")
                 time.sleep(3)
@@ -117,16 +130,16 @@ def main():
                     logging.error(f"Error retrieving frame config: {e}")
                     continue
 
-                # Only process frames for the connected cameras
+                
+                # ✅ UPDATED: Log actual IPs for frame processing
                 if connected_cameras:
-                    logging.info(f"Processing frames for connected cameras: {connected_cameras}")
+                    camera_ips_only = connected_cameras  # Simply use the list of IP strings
+                    logging.info(f"Processing frames for connected cameras: {camera_ips_only}")
                     status = process_frames(connected_cameras, frame_config)
-                    logging.info(status)
-                    
+                    logging.info("Frame processing results: %s", status)
                 else:
                     logging.warning("No connected cameras. Skipping frame processing.")
-            else:
-                logging.info("Planting not active. Skipping frame processing.")
+
 
             send_heartbeat(objects, PLC_VAR_PATH, plc_vars["python_heartbeat"])
             time.sleep(3)

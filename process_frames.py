@@ -137,6 +137,7 @@ def process_frames(camera_ips, frame_config):
             print(f"Error processing frame for camera {ip}: {e}")
             tree_is_vertical[ip] = False
 
+
     # Return the overall status of the tree after checking all cameras
     return dict(tree_is_vertical)
     
