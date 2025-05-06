@@ -120,9 +120,7 @@ def main():
                 # Only process frames for the connected cameras
                 if connected_cameras:
                     logging.info(f"Processing frames for connected cameras: {connected_cameras}")
-                    status = process_frames(
-                        connected_cameras, frame_config, objects
-                    )
+                    status = process_frames(connected_cameras, frame_config)
                     logging.info(status)
                     
                 else:

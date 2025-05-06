@@ -8,7 +8,7 @@ from camera_package.centroid import process_cnt
 from camera import grab_frame_from_camera
 
 
-def process_frames(camera_ips, frame_config, objects):
+def process_frames(camera_ips, frame_config):
 
 
     """
