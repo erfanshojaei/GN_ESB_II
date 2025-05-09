@@ -7,6 +7,7 @@ import atexit
 
 from opcua import ua
 
+
 # Custom module imports
 from process_frames import process_frames
 from frame_config import get_frame_config
@@ -16,6 +17,7 @@ from exit_operation import exit_operation
 from planting_operation import planting_operation
 from session_utils import getSessionNumber
 from send_heartbeat import send_heartbeat
+from send_tree_status import send_tree_status_to_codesys  # ✅ NEW
 
 # --- Logging Configuration ---
 logging.getLogger("opcua").setLevel(logging.WARNING)  # Suppress OPC UA library logs
@@ -101,20 +103,16 @@ def main():
                 plc_vars["camera_status_code_6"]
             )
 
-            
-            # ✅ UPDATED: Log connected camera statuses (vertical/non-vertical)
             if connected_cameras:
                 for camera in connected_cameras:
                     logging.info(f"Camera {camera} is connected.")
             else:
                 logging.warning("No connected cameras. Skipping frame processing.")
 
-            # Log disconnected cameras
             if not_connected_cameras:
                 for camera in not_connected_cameras:
                     logging.error(f"Camera {camera} is not connected.")
 
-            # Skip if no connected cameras or failure in connection check
             if not camera_status:
                 logging.error("Camera check failed. Skipping iteration.")
                 time.sleep(3)
@@ -130,16 +128,22 @@ def main():
                     logging.error(f"Error retrieving frame config: {e}")
                     continue
 
-                
-                # ✅ UPDATED: Log actual IPs for frame processing
                 if connected_cameras:
-                    camera_ips_only = connected_cameras  # Simply use the list of IP strings
-                    logging.info(f"Processing frames for connected cameras: {camera_ips_only}")
+                    logging.info(f"Processing frames for connected cameras: {connected_cameras}")
                     status = process_frames(connected_cameras, frame_config)
                     logging.info("Frame processing results: %s", status)
+
+                    # ✅ Send tree status codes to CODESYS
+                    send_tree_status_to_codesys(
+                        connected_cameras=connected_cameras,
+                        status_dict=status,
+                        all_camera_ips=camera_ips,
+                        objects=objects,
+                        plc_var_path=PLC_VAR_PATH,
+                        plc_vars=plc_vars
+                    )
                 else:
                     logging.warning("No connected cameras. Skipping frame processing.")
-
 
             send_heartbeat(objects, PLC_VAR_PATH, plc_vars["python_heartbeat"])
             time.sleep(3)

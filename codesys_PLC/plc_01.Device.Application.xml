@@ -39,8 +39,14 @@
         <Node name="set_nrml_acc" nodeflags="SigTypeProgram ExportedVariable" type="T_BOOL" access="ReadWrite" />
         <Node name="set_vry_hgh_acc" nodeflags="SigTypeProgram ExportedVariable" type="T_BOOL" access="ReadWrite" />
         <Node name="set_vry_low_acc" nodeflags="SigTypeProgram ExportedVariable" type="T_BOOL" access="ReadWrite" />
+        <Node name="tree_code_01" nodeflags="SigTypeProgram ExportedVariable" type="T_USINT" access="ReadWrite" />
         <Node name="tree_non_vertical" nodeflags="SigTypeProgram ExportedVariable" type="T_BOOL" access="ReadWrite" />
-        <Node name="tree_status_code" nodeflags="SigTypeProgram ExportedVariable" type="T_DINT" access="ReadWrite" />
+        <Node name="tree_status_code_1" nodeflags="SigTypeProgram ExportedVariable" type="T_USINT" access="ReadWrite" />
+        <Node name="tree_status_code_2" nodeflags="SigTypeProgram ExportedVariable" type="T_USINT" access="ReadWrite" />
+        <Node name="tree_status_code_3" nodeflags="SigTypeProgram ExportedVariable" type="T_USINT" access="ReadWrite" />
+        <Node name="tree_status_code_4" nodeflags="SigTypeProgram ExportedVariable" type="T_USINT" access="ReadWrite" />
+        <Node name="tree_status_code_5" nodeflags="SigTypeProgram ExportedVariable" type="T_USINT" access="ReadWrite" />
+        <Node name="tree_status_code_6" nodeflags="SigTypeProgram ExportedVariable" type="T_USINT" access="ReadWrite" />
         <Node name="tree_vertical" nodeflags="SigTypeProgram ExportedVariable" type="T_BOOL" access="ReadWrite" />
       </Node>
     </Node>
